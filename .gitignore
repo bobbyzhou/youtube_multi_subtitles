@@ -35,6 +35,8 @@ npm-cache/
 npm-packages-offline-cache/
 node_modules/.cache/
 
+.npm-cache.local/
+
 
 # Test coverage / reports
 coverage/
