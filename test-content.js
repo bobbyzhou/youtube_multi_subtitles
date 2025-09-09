@@ -11,7 +11,7 @@ window.simpleDebug = function() {
   console.log('当前页面:', window.location.href);
   console.log('Chrome API可用:', typeof chrome !== 'undefined');
   console.log('Chrome Runtime可用:', typeof chrome?.runtime !== 'undefined');
-  
+
   if (typeof chrome !== 'undefined' && chrome.runtime) {
     chrome.runtime.sendMessage({type: 'GET_SETTINGS'}, (response) => {
       if (chrome.runtime.lastError) {

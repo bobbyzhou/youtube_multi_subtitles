@@ -16,7 +16,7 @@ class PerformanceMonitor {
         queueSize: 0
       }
     };
-    
+
     this.translationTimes = [];
     this.maxSamples = 100; // 保留最近100次翻译的时间记录
   }
@@ -25,14 +25,14 @@ class PerformanceMonitor {
   startTranslation(text) {
     const startTime = performance.now();
     this.metrics.translationRequests++;
-    
+
     return {
       text,
       startTime,
       finish: (success, fromCache = false) => {
         const endTime = performance.now();
         const duration = endTime - startTime;
-        
+
         if (success) {
           if (fromCache) {
             this.metrics.cacheHits++;
@@ -43,7 +43,7 @@ class PerformanceMonitor {
         } else {
           this.metrics.errors++;
         }
-        
+
         this.updateMemoryUsage();
       }
     };
@@ -52,15 +52,15 @@ class PerformanceMonitor {
   // 记录翻译时间
   recordTranslationTime(duration) {
     this.translationTimes.push(duration);
-    
+
     // 保持样本数量在限制内
     if (this.translationTimes.length > this.maxSamples) {
       this.translationTimes.shift();
     }
-    
+
     // 更新平均时间
     this.metrics.totalTranslationTime += duration;
-    this.metrics.averageTranslationTime = 
+    this.metrics.averageTranslationTime =
       this.translationTimes.reduce((a, b) => a + b, 0) / this.translationTimes.length;
   }
 
@@ -74,10 +74,10 @@ class PerformanceMonitor {
 
   // 获取性能报告
   getReport() {
-    const cacheHitRate = this.metrics.translationRequests > 0 
+    const cacheHitRate = this.metrics.translationRequests > 0
       ? (this.metrics.cacheHits / this.metrics.translationRequests * 100).toFixed(2)
       : 0;
-    
+
     const errorRate = this.metrics.translationRequests > 0
       ? (this.metrics.errors / this.metrics.translationRequests * 100).toFixed(2)
       : 0;
@@ -102,7 +102,7 @@ class PerformanceMonitor {
   // 打印性能报告到控制台
   printReport() {
     const report = this.getReport();
-    
+
     console.group('🚀 YouTube双语字幕 - 性能报告');
     console.log('📊 总览:', report.summary);
     console.log('📈 详细数据:', report.details);
@@ -123,7 +123,7 @@ class PerformanceMonitor {
         queueSize: 0
       }
     };
-    
+
     this.translationTimes = [];
   }
 
@@ -131,7 +131,7 @@ class PerformanceMonitor {
   getOptimizationSuggestions() {
     const report = this.getReport();
     const suggestions = [];
-    
+
     // 缓存命中率低
     if (parseFloat(report.summary.cacheHitRate) < 30) {
       suggestions.push({
@@ -139,7 +139,7 @@ class PerformanceMonitor {
         message: '缓存命中率较低，建议增加缓存时间或启用预翻译功能'
       });
     }
-    
+
     // 翻译时间过长
     if (this.metrics.averageTranslationTime > 2000) {
       suggestions.push({
@@ -147,7 +147,7 @@ class PerformanceMonitor {
         message: '翻译响应时间较慢，建议检查网络连接或使用官方API'
       });
     }
-    
+
     // 错误率高
     if (parseFloat(report.summary.errorRate) > 10) {
       suggestions.push({
@@ -155,7 +155,7 @@ class PerformanceMonitor {
         message: '翻译错误率较高，建议检查API配置或网络状况'
       });
     }
-    
+
     // 内存使用过多
     if (this.metrics.memoryUsage.cacheSize > 200) {
       suggestions.push({
@@ -163,7 +163,7 @@ class PerformanceMonitor {
         message: '内存缓存过大，建议清理缓存或减少缓存时间'
       });
     }
-    
+
     return suggestions;
   }
 }

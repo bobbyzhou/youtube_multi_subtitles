@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', function() {
     chrome.storage.sync.set(settings, function() {
       // 显示保存成功消息
       showStatus('设置已保存', 'success');
-      
+
       // 通知content script设置已更新
       chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
         if (tabs[0] && tabs[0].url.includes('youtube.com/watch')) {

@@ -5,7 +5,9 @@
   "main": "background.js",
   "scripts": {
     "test": "jest --runInBand",
-    "test:ci": "jest --ci --color"
+    "test:ci": "jest --ci --color",
+    "lint": "eslint *.js __tests__/*.js",
+    "lint:fix": "eslint *.js __tests__/*.js --fix"
   },
   "repository": {
     "type": "git",
@@ -19,6 +21,8 @@
   },
   "homepage": "https://github.com/bobbyzhou/youtube_multi_subtitles#readme",
   "devDependencies": {
+    "@eslint/js": "^9.35.0",
+    "eslint": "^9.35.0",
     "jest": "^27.5.1",
     "jest-chrome": "^0.8.0",
     "jest-environment-jsdom": "^27.5.1"
