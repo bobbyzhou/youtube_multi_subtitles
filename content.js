@@ -16,10 +16,15 @@ class BilingualSubtitles {
       apiKey: '',
       cacheTime: 24,
       preTranslate: true,
+      prefetchAggressive: 'medium', // 'off' | 'low' | 'medium' | 'high'
+      prefetchLookahead: 5,         // 预取的字幕条数上限
+      prefetchIntervalMs: 300,      // 预取节流间隔
       showOriginal: true,
       animationEnabled: true,
       translationDelay: 50,
-      hideYouTubeCaptions: true
+      hideYouTubeCaptions: true,
+      stableLayout: true,           // 预留空间，避免上下/左右跳动
+      reserveLines: 2               // 预留的行数（用于容器高度）
     };
 
     this.currentSubtitles = [];
@@ -118,6 +123,11 @@ class BilingualSubtitles {
 
     // 创建字幕显示容器
     this.createSubtitleContainer();
+    // 应用稳定布局类
+    if (this.subtitleContainer) {
+      this.subtitleContainer.classList.toggle('reserve-space', !!this.settings.stableLayout);
+      this.subtitleContainer.style.setProperty('--bs-reserve-lines', String(this.settings.reserveLines || 2));
+    }
 
     // 为跳转/倍速建立保护
     this.setupPlaybackEventGuards();
@@ -147,6 +157,11 @@ class BilingualSubtitles {
     // 创建新容器
     this.subtitleContainer = document.createElement('div');
     this.subtitleContainer.className = `bilingual-subtitles-container position-${this.settings.displayPosition} size-${this.settings.fontSize} ${this.settings.animationEnabled ? 'animations-enabled' : 'animations-disabled'}`;
+      // 稳定布局
+      if (this.settings.stableLayout) {
+        this.subtitleContainer.classList.add('reserve-space');
+        this.subtitleContainer.style.setProperty('--bs-reserve-lines', String(this.settings.reserveLines || 2));
+      }
 
     // 添加到视频播放器
     const player = document.querySelector('.html5-video-player');
@@ -394,11 +409,14 @@ class BilingualSubtitles {
         if (this.settings.preTranslate) {
           this.preTranslateUpcomingSubtitles();
         }
+        // 更加激进的预取（可配置）
+        this.aggressivePrefetchTick && this.aggressivePrefetchTick();
       });
     }
   }
 
   preTranslateUpcomingSubtitles() {
+    if (this.settings.prefetchAggressive === 'off') return;
     // 这是一个简化的预翻译实现
     // 在实际应用中，可以通过分析字幕时间轴来预测即将出现的字幕
 
@@ -417,17 +435,38 @@ class BilingualSubtitles {
 
       // 批量预翻译（限制数量以避免过多API调用）
       if (upcomingTexts.length > 0) {
-        this.batchPreTranslate(upcomingTexts.slice(0, 5)); // 最多预翻译5个
+        const lookahead = Math.max(1, this.settings.prefetchLookahead || 5);
+        this.batchPreTranslate(upcomingTexts.slice(0, lookahead));
       }
     }
   }
 
   async batchPreTranslate(texts) {
+    // 去重并过滤已在队列/缓存中的条目
+    const targetLang = this.settings.targetLanguage;
+    const unique = [];
+    const seen = new Set();
+    for (const t of texts) {
+      const key = `${targetLang}-${t}`;
+      if (!seen.has(key) && !this.translationCache.has(key) && !this.translationQueue.has(key)) {
+        seen.add(key);
+        unique.push(t);
+      }
+    }
+    if (unique.length === 0) return;
+
     try {
+      // 节流：根据 aggressive 等级控制频率
+      const now = Date.now();
+      const minGap = this.settings.prefetchIntervalMs || 300;
+      this._lastPrefetchAt = this._lastPrefetchAt || 0;
+      if (now - this._lastPrefetchAt < minGap) return; // skip too frequent
+      this._lastPrefetchAt = now;
+
       const response = await new Promise((resolve) => {
         chrome.runtime.sendMessage({
           type: 'TRANSLATE_BATCH',
-          texts: texts,
+          texts: unique,
           targetLanguage: this.settings.targetLanguage
         }, resolve);
 
@@ -567,8 +606,14 @@ class BilingualSubtitles {
     }
 
     // 更新原文文本（只在变更时写入）
-    if (this.dom.originalEl.textContent !== originalText) {
-      this.dom.originalEl.textContent = originalText;
+    // 根据设置控制原文显示
+    if (!this.settings.showOriginal) {
+      this.dom.originalEl.style.display = 'none';
+    } else {
+      this.dom.originalEl.style.display = '';
+      if (this.dom.originalEl.textContent !== originalText) {
+        this.dom.originalEl.textContent = originalText;
+      }
     }
 
     // 控制“翻译中...”延迟展示窗口
@@ -817,7 +862,7 @@ class BilingualSubtitles {
     // 更新容器样式
     if (this.subtitleContainer) {
       this.subtitleContainer.className = `bilingual-subtitles-container position-${this.settings.displayPosition} size-${this.settings.fontSize} ${this.settings.animationEnabled ? 'animations-enabled' : 'animations-disabled'}`;
-      // 同步原生字幕隐藏状态
+      // 稳定布局 & 同步原生字幕隐藏状态
       const player = document.querySelector('.html5-video-player');
       if (player) {
         const overlay = this.settings.displayPosition === 'overlay';

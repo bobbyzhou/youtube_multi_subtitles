@@ -11,6 +11,10 @@
   text-align: center;
   max-width: 90%;
   line-height: 1.4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
 }
 
 /* 底部显示位置 */
@@ -35,7 +39,7 @@
   padding: 4px 10px;
   border-radius: 4px;
   margin-bottom: 4px;
-  display: inline-block;
+  display: block;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 
@@ -52,7 +56,7 @@
   color: #ffffff;
   padding: 4px 10px;
   border-radius: 4px;
-  display: inline-block;
+  display: block;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 
@@ -109,6 +113,8 @@
 /* 错误状态 */
 .translated-subtitle.error {
   background: rgba(200, 50, 50, 0.8);
+  opacity: 0.7;
+}
 
 /* 允许动态关闭动画以消除切换闪烁 */
 .bilingual-subtitles-container.animations-disabled,
@@ -118,14 +124,16 @@
   animation: none !important;
 }
 
-  opacity: 0.7;
-}
-
 /* 淡入淡出动画 */
 .bilingual-subtitles-container {
   transition: all 0.3s ease-in-out;
   opacity: 0;
   transform: translateX(-50%) translateY(10px);
+}
+
+/* 稳定布局：预留空间避免跳动 */
+.bilingual-subtitles-container.reserve-space {
+  min-height: calc(var(--bs-font-size, 16px) * 1.4 * var(--bs-reserve-lines, 2));
 }
 
 .bilingual-subtitles-container.fade-in {
