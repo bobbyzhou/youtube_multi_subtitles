@@ -1,0 +1,50 @@
+# OS / Editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# IDE settings
+.vscode/
+.idea/
+*.code-workspace
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Build outputs / caches
+/dist/
+/build/
+/out/
+.tmp/
+/tmp/
+/temp/
+.cache/
+.parcel-cache/
+
+# Test coverage / reports
+coverage/
+.nyc_output/
+reports/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Chrome extension packaging artifacts
+*.crx
+*.pem
+key.pem
+*.zip
+
+# Archives
+*.tar
+*.tar.gz
+*.7z
+*.rar
+
