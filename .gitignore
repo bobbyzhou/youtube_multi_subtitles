@@ -48,3 +48,4 @@ key.pem
 *.7z
 *.rar
 
+node_modules

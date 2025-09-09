@@ -1,10 +1,13 @@
 // content.js - 主要的内容脚本，处理YouTube页面的字幕提取和双语显示
 
-console.log('🚀 Content Script 开始加载...');
-console.log('📍 当前页面:', window.location.href);
+if (typeof window !== 'undefined') {
+  console.log('🚀 Content Script 开始加载...');
+  console.log('📍 当前页面:', window.location.href);
+}
 
 class BilingualSubtitles {
-  constructor() {
+  constructor(options = {}) {
+    this.options = options;
     this.settings = {
       enabled: true,
       targetLanguage: 'zh-CN',
@@ -43,7 +46,9 @@ class BilingualSubtitles {
     this.captionsObserver = null;
 
 
-    this.init();
+    if (!this.options.skipInit) {
+      this.init();
+    }
   }
 
   async init() {
@@ -53,9 +58,9 @@ class BilingualSubtitles {
     await this.loadSettings();
 
     // 等待页面加载完成
-    if (document.readyState === 'loading') {
+    if (typeof document !== 'undefined' && document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', () => this.setupPlugin());
-    } else {
+    } else if (typeof document !== 'undefined') {
       this.setupPlugin();
     }
 
@@ -854,13 +859,22 @@ class BilingualSubtitles {
   }
 }
 
-// 初始化插件
-console.log('🔧 正在初始化 BilingualSubtitles...');
-const bilingualSubtitles = new BilingualSubtitles();
-console.log('✅ BilingualSubtitles 初始化完成');
+// 初始化插件（仅在扩展环境中）
+if (typeof window !== 'undefined' && typeof document !== 'undefined' && typeof chrome !== 'undefined' && chrome.runtime) {
+  console.log('🔧 正在初始化 BilingualSubtitles...');
+  const bilingualSubtitles = new BilingualSubtitles();
+  console.log('✅ BilingualSubtitles 初始化完成');
 
-// 添加到全局作用域以便调试
-window.BilingualSubtitles = BilingualSubtitles;
-window.bilingualSubtitles = bilingualSubtitles;
+  // 添加到全局作用域以便调试
+  try {
+    window.BilingualSubtitles = BilingualSubtitles;
+    window.bilingualSubtitles = bilingualSubtitles;
+  } catch (e) {}
 
-console.log('🎉 Content Script 加载完成!');
+  console.log('🎉 Content Script 加载完成!');
+}
+
+// 兼容测试环境导出
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { BilingualSubtitles };
+}
