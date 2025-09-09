@@ -6,8 +6,10 @@
   "scripts": {
     "test": "jest --runInBand",
     "test:ci": "jest --ci --color",
+    "test:coverage": "jest --coverage --runInBand",
     "lint": "eslint *.js __tests__/*.js",
-    "lint:fix": "eslint *.js __tests__/*.js --fix"
+    "lint:fix": "eslint *.js __tests__/*.js --fix",
+    "test:watch": "jest --watch --runInBand"
   },
   "repository": {
     "type": "git",
@@ -25,6 +27,8 @@
     "eslint": "^9.35.0",
     "jest": "^27.5.1",
     "jest-chrome": "^0.8.0",
-    "jest-environment-jsdom": "^27.5.1"
+    "jest-coverage-badges": "^1.1.2",
+    "jest-environment-jsdom": "^27.5.1",
+    "nyc": "^17.1.0"
   }
 }
