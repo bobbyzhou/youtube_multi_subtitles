@@ -6,6 +6,8 @@ Thumbs.db
 
 # IDE settings
 .vscode/
+!.vscode/tasks.json
+
 .idea/
 *.code-workspace
 
