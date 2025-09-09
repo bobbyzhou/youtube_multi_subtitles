@@ -441,6 +441,18 @@ class BilingualSubtitles {
     }
   }
 
+  // 更加激进的预取心跳（根据设置动态节流）
+  aggressivePrefetchTick() {
+    const level = this.settings.prefetchAggressive || 'off';
+    if (level === 'off') return;
+    const defaults = { low: 600, medium: 300, high: 120 };
+    if (!this.settings.prefetchIntervalMs) {
+      this.settings.prefetchIntervalMs = defaults[level] || 300;
+    }
+    try { this.preTranslateUpcomingSubtitles(); } catch (e) {}
+  }
+
+
   async batchPreTranslate(texts) {
     // 去重并过滤已在队列/缓存中的条目
     const targetLang = this.settings.targetLanguage;
@@ -862,13 +874,21 @@ class BilingualSubtitles {
     // 更新容器样式
     if (this.subtitleContainer) {
       this.subtitleContainer.className = `bilingual-subtitles-container position-${this.settings.displayPosition} size-${this.settings.fontSize} ${this.settings.animationEnabled ? 'animations-enabled' : 'animations-disabled'}`;
-      // 稳定布局 & 同步原生字幕隐藏状态
+      // 稳定布局参数
+      this.subtitleContainer.classList.toggle('reserve-space', !!this.settings.stableLayout);
+      this.subtitleContainer.style.setProperty('--bs-reserve-lines', String(this.settings.reserveLines || 2));
+      // 同步原生字幕隐藏状态
       const player = document.querySelector('.html5-video-player');
       if (player) {
         const overlay = this.settings.displayPosition === 'overlay';
         player.classList.toggle('bilingual-subtitles-overlay-mode', overlay);
         player.classList.toggle('bilingual-subtitles-hide-native', !!this.settings.hideYouTubeCaptions);
       }
+    }
+
+    // 即时响应 showOriginal 设置
+    if (this.dom?.originalEl) {
+      this.dom.originalEl.style.display = this.settings.showOriginal ? '' : 'none';
     }
   }
 
