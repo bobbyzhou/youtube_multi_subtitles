@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "YouTube双语字幕-测试版",
+  "version": "1.0.0",
+  "description": "测试版本",
+  
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  
+  "host_permissions": [
+    "https://www.youtube.com/*"
+  ],
+  
+  "background": {
+    "service_worker": "background.js"
+  },
+  
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/watch*"],
+      "js": ["test-content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "YouTube双语字幕设置"
+  }
+}

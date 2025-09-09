@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "name": "YouTube双语字幕",
+  "version": "1.0.0",
+  "description": "在YouTube视频上显示双语字幕，支持多种翻译语言",
+  
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  
+  "host_permissions": [
+    "https://www.youtube.com/*",
+    "https://translate.googleapis.com/*",
+    "https://translation.googleapis.com/*"
+  ],
+  
+  "background": {
+    "service_worker": "background.js"
+  },
+  
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["performance-monitor.js", "debug-tools.js", "content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "YouTube双语字幕设置"
+  },
+  
+  "web_accessible_resources": [
+    {
+      "resources": ["content.css", "content.js", "performance-monitor.js", "debug-tools.js"],
+      "matches": ["https://www.youtube.com/*"]
+    }
+  ]
+}
