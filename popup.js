@@ -14,6 +14,11 @@ document.addEventListener('DOMContentLoaded', function() {
   const hideYouTubeCaptionsToggle = document.getElementById('hideYouTubeCaptions');
   const animationEnabledToggle = document.getElementById('animationEnabled');
   const translationDelaySelect = document.getElementById('translationDelay');
+  const prefetchAggressiveSelect = document.getElementById('prefetchAggressive');
+  const prefetchLookaheadSelect = document.getElementById('prefetchLookahead');
+  const prefetchIntervalMsSelect = document.getElementById('prefetchIntervalMs');
+  const stableLayoutToggle = document.getElementById('stableLayout');
+  const reserveLinesSelect = document.getElementById('reserveLines');
   const clearCacheBtn = document.getElementById('clearCacheBtn');
   const saveBtn = document.getElementById('saveBtn');
   const statusDiv = document.getElementById('status');
@@ -28,6 +33,11 @@ document.addEventListener('DOMContentLoaded', function() {
     apiKey: '',
     cacheTime: 24,
     preTranslate: true,
+    prefetchAggressive: 'medium',
+    prefetchLookahead: 5,
+    prefetchIntervalMs: 300,
+    stableLayout: true,
+    reserveLines: 2,
     showOriginal: true,
     animationEnabled: true,
     translationDelay: 50,
@@ -54,6 +64,11 @@ document.addEventListener('DOMContentLoaded', function() {
       apiKeyInput.value = settings.apiKey;
       cacheTimeSelect.value = settings.cacheTime;
       preTranslateToggle.checked = settings.preTranslate;
+      prefetchAggressiveSelect.value = settings.prefetchAggressive;
+      prefetchLookaheadSelect.value = settings.prefetchLookahead;
+      prefetchIntervalMsSelect.value = settings.prefetchIntervalMs;
+      stableLayoutToggle.checked = settings.stableLayout;
+      reserveLinesSelect.value = settings.reserveLines;
       showOriginalToggle.checked = settings.showOriginal;
       hideYouTubeCaptionsToggle.checked = settings.hideYouTubeCaptions;
       animationEnabledToggle.checked = settings.animationEnabled;
@@ -72,6 +87,11 @@ document.addEventListener('DOMContentLoaded', function() {
       apiKey: apiKeyInput.value.trim(),
       cacheTime: parseInt(cacheTimeSelect.value),
       preTranslate: preTranslateToggle.checked,
+      prefetchAggressive: prefetchAggressiveSelect.value,
+      prefetchLookahead: parseInt(prefetchLookaheadSelect.value),
+      prefetchIntervalMs: parseInt(prefetchIntervalMsSelect.value),
+      stableLayout: stableLayoutToggle.checked,
+      reserveLines: parseInt(reserveLinesSelect.value),
       showOriginal: showOriginalToggle.checked,
       hideYouTubeCaptions: hideYouTubeCaptionsToggle.checked,
       animationEnabled: animationEnabledToggle.checked,
@@ -119,8 +139,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // 监听设置变化，实时预览
   [enabledToggle, targetLanguageSelect, displayPositionSelect, fontSizeSelect,
-   apiPreferenceSelect, apiKeyInput, cacheTimeSelect, preTranslateToggle, showOriginalToggle, hideYouTubeCaptionsToggle,
-   animationEnabledToggle, translationDelaySelect].forEach(element => {
+   apiPreferenceSelect, apiKeyInput, cacheTimeSelect, preTranslateToggle, prefetchAggressiveSelect, prefetchLookaheadSelect, prefetchIntervalMsSelect,
+   stableLayoutToggle, reserveLinesSelect, showOriginalToggle, hideYouTubeCaptionsToggle, animationEnabledToggle, translationDelaySelect].forEach(element => {
     element.addEventListener('change', function() {
       // 可以在这里添加实时预览逻辑
       console.log('Setting changed:', element.id, element.value || element.checked);

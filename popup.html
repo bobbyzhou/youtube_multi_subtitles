@@ -239,6 +239,58 @@
 
   <div class="advanced-settings" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;">
     <h3 style="margin: 0 0 10px 0; font-size: 14px; color: #333;">高级设置</h3>
+    <div class="setting-group">
+      <label for="prefetchAggressive">预取强度</label>
+      <select id="prefetchAggressive">
+        <option value="off">关闭</option>
+        <option value="low">低</option>
+        <option value="medium" selected>中</option>
+        <option value="high">高</option>
+      </select>
+      <small style="color: #666; font-size: 12px;">控制预取频率，越高越及时但更耗流量</small>
+    </div>
+
+    <div class="setting-group">
+      <label for="prefetchLookahead">预取数量（条）</label>
+      <select id="prefetchLookahead">
+        <option value="1">1</option>
+        <option value="3">3</option>
+        <option value="5" selected>5</option>
+        <option value="8">8</option>
+        <option value="12">12</option>
+      </select>
+    </div>
+
+    <div class="setting-group">
+      <label for="prefetchIntervalMs">预取节流间隔 (ms)</label>
+      <select id="prefetchIntervalMs">
+        <option value="120">120</option>
+        <option value="200">200</option>
+        <option value="300" selected>300</option>
+        <option value="600">600</option>
+        <option value="1000">1000</option>
+      </select>
+    </div>
+
+    <div class="setting-group">
+      <label for="stableLayout">稳定布局（预留空间）</label>
+      <label class="toggle-switch">
+        <input type="checkbox" id="stableLayout" checked>
+        <span class="slider"></span>
+      </label>
+      <small style="color: #666; font-size: 12px;">减少字幕出现/消失时的上下跳动</small>
+    </div>
+
+    <div class="setting-group">
+      <label for="reserveLines">预留行数</label>
+      <select id="reserveLines">
+        <option value="1">1</option>
+        <option value="2" selected>2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+      </select>
+    </div>
+
 
     <div class="setting-group">
       <label for="translationDelay">翻译延迟 (毫秒)</label>

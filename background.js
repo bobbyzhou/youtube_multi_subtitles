@@ -34,6 +34,11 @@ chrome.runtime.onInstalled.addListener((details) => {
     apiKey: '',
     cacheTime: 24,
     preTranslate: true,
+    prefetchAggressive: 'medium',
+    prefetchLookahead: 5,
+    prefetchIntervalMs: 300,
+    stableLayout: true,
+    reserveLines: 2,
     showOriginal: true,
     animationEnabled: true,
     translationDelay: 50,
@@ -456,7 +461,17 @@ async function getSettings() {
       fontSize: 'medium',
       apiKey: '',
       cacheTime: 24,
-      preTranslate: true
+      preTranslate: true,
+      prefetchAggressive: 'medium',
+      prefetchLookahead: 5,
+      prefetchIntervalMs: 300,
+      stableLayout: true,
+      reserveLines: 2,
+      showOriginal: true,
+      animationEnabled: true,
+      translationDelay: 50,
+      hideYouTubeCaptions: true,
+      apiPreference: 'auto'
     };
 
     chrome.storage.sync.get(defaultSettings, (settings) => {
