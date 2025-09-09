@@ -272,7 +272,7 @@ class BilingualSubtitles {
   // 重新挂载字幕观察器（用于 seek/倍速后 DOM 变化）
   reattachObservers() {
     console.log('🔧 重新挂载观察器');
-    try { if (this.observer) this.observer.disconnect(); } catch (e) {}
+    try { if (this.observer) this.observer.disconnect(); } catch (_e) {}
     this.observer = null;
 
     // 等待一小段时间让YouTube DOM稳定
@@ -335,7 +335,7 @@ class BilingualSubtitles {
       // 暂停周期检查，避免在跳转瞬间误判
       if (this.periodicCheckInterval) { clearInterval(this.periodicCheckInterval); this.periodicCheckInterval = null; }
       // 断开旧观察器，等待重建
-      if (this.observer) { try { this.observer.disconnect(); } catch (e) {} this.observer = null; }
+      if (this.observer) { try { this.observer.disconnect(); } catch (_e) {} this.observer = null; }
     };
 
     const onSeeked = () => {
@@ -513,7 +513,7 @@ class BilingualSubtitles {
 
     if (cachedTranslation) {
       // 记录缓存命中（容错处理：仅在监控可用时使用）
-      try { window.performanceMonitor?.startTranslation?.(originalText)?.finish?.(true, true); } catch (e) {}
+      try { window.performanceMonitor?.startTranslation?.(originalText)?.finish?.(true, true); } catch (_e) {}
 
       console.log('💾 使用缓存翻译:', cachedTranslation);
       // 直接显示缓存的翻译
@@ -593,7 +593,7 @@ class BilingualSubtitles {
 
       // 开始性能监控（容错）
       let perfTracker = null;
-      try { perfTracker = window.performanceMonitor?.startTranslation?.(originalText) || null; } catch (e) {}
+      try { perfTracker = window.performanceMonitor?.startTranslation?.(originalText) || null; } catch (_e) {}
 
       // 生成本次请求序号，用于过期保护
       const seq = ++this.requestSeq;
@@ -724,7 +724,7 @@ class BilingualSubtitles {
         this.lastApiSource = res.source;
         return res.source;
       }
-    } catch (e) { /* ignore */ }
+    } catch (_e) { /* ignore */ }
     return null;
   }
 
@@ -869,7 +869,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined' && typeof c
   try {
     window.BilingualSubtitles = BilingualSubtitles;
     window.bilingualSubtitles = bilingualSubtitles;
-  } catch (e) {}
+  } catch (_e) {}
 
   console.log('🎉 Content Script 加载完成!');
 }

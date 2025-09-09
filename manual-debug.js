@@ -23,12 +23,12 @@ function enableDebugMode() {
 // 测试扩展通信
 async function testExtensionCommunication() {
   console.log('📡 测试扩展通信...');
-  
+
   if (typeof chrome === 'undefined' || !chrome.runtime) {
     console.error('❌ Chrome扩展API不可用');
     return;
   }
-  
+
   try {
     const response = await new Promise((resolve, reject) => {
       chrome.runtime.sendMessage({
@@ -41,10 +41,10 @@ async function testExtensionCommunication() {
         }
       });
     });
-    
+
     console.log('✅ 扩展通信正常:', response);
     return response;
-    
+
   } catch (error) {
     console.error('❌ 扩展通信失败:', error);
     return null;
@@ -54,7 +54,7 @@ async function testExtensionCommunication() {
 // 测试翻译功能
 async function testTranslation() {
   console.log('🔄 测试翻译功能...');
-  
+
   try {
     const response = await new Promise((resolve, reject) => {
       chrome.runtime.sendMessage({
@@ -70,16 +70,16 @@ async function testTranslation() {
         }
       });
     });
-    
+
     if (response && response.success) {
       console.log('✅ 翻译成功:', response.translation);
       console.log('📊 来源:', response.fromCache ? '缓存' : '实时翻译');
     } else {
       console.error('❌ 翻译失败:', response?.error);
     }
-    
+
     return response;
-    
+
   } catch (error) {
     console.error('❌ 翻译测试失败:', error);
     return null;
@@ -89,14 +89,14 @@ async function testTranslation() {
 // 检查字幕元素
 function checkSubtitleElements() {
   console.log('🎬 检查字幕元素...');
-  
+
   const selectors = [
     '.ytp-caption-segment',
     '.captions-text',
     '.ytp-caption-window-container .ytp-caption-segment',
     '[class*="caption"]'
   ];
-  
+
   selectors.forEach(selector => {
     const elements = document.querySelectorAll(selector);
     console.log(`- ${selector}: ${elements.length} 个元素`);
@@ -110,18 +110,18 @@ function checkSubtitleElements() {
 async function runFullDiagnosis() {
   console.log('🚀 开始完整诊断...');
   console.log('='.repeat(50));
-  
+
   checkEnvironment();
   console.log('-'.repeat(30));
-  
+
   const settings = await testExtensionCommunication();
   console.log('-'.repeat(30));
-  
+
   if (settings) {
     await testTranslation();
     console.log('-'.repeat(30));
   }
-  
+
   checkSubtitleElements();
   console.log('='.repeat(50));
   console.log('🏁 诊断完成');

@@ -333,7 +333,7 @@ async function translateWithFreeAPI(text, sourceLanguage, targetLanguage) {
     }
 
     const data = await response.json();
-    console.log(`📊 响应数据:`, data);
+    console.log('📊 响应数据:', data);
 
     // 解析免费API响应
     if (data && data[0] && data[0][0] && data[0][0][0]) {
@@ -341,11 +341,11 @@ async function translateWithFreeAPI(text, sourceLanguage, targetLanguage) {
       console.log(`✅ 翻译成功: "${translation}"`);
       return translation;
     } else {
-      console.error(`❌ 响应格式错误:`, data);
+      console.error('❌ 响应格式错误:', data);
       throw new Error('Invalid free API response format');
     }
   } catch (error) {
-    console.error(`❌ 免费API翻译失败:`, error);
+    console.error('❌ 免费API翻译失败:', error);
     throw error;
   }
 }

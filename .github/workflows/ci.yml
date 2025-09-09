@@ -16,5 +16,7 @@ jobs:
           node-version: '18'
       - name: Install dependencies
         run: npm ci || npm install
+      - name: Run linting
+        run: npm run lint
       - name: Run tests
         run: npm test

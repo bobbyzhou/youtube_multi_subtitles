@@ -6,13 +6,13 @@ class DebugTools {
   constructor() {
     this.isDebugMode = localStorage.getItem('youtube-subtitles-debug') === 'true';
     this.testSubtitles = [
-      "Hello, welcome to this video tutorial.",
+      'Hello, welcome to this video tutorial.',
       "Today we're going to learn about JavaScript.",
       "Let's start with the basics of programming.",
-      "Variables are used to store data values.",
-      "Functions help us organize our code better."
+      'Variables are used to store data values.',
+      'Functions help us organize our code better.'
     ];
-    
+
     this.init();
   }
 
@@ -90,10 +90,10 @@ class DebugTools {
         </div>
       </div>
     `;
-    
+
     document.body.appendChild(debugPanel);
     this.debugPanel = debugPanel;
-    
+
     // 定期更新统计信息
     setInterval(() => this.updateStats(), 1000);
   }
@@ -101,13 +101,13 @@ class DebugTools {
   // 更新统计信息
   updateStats() {
     if (!window.performanceMonitor) return;
-    
+
     const report = window.performanceMonitor.getReport();
-    
+
     const translationCountEl = document.getElementById('translation-count');
     const cacheHitsEl = document.getElementById('cache-hits');
     const errorCountEl = document.getElementById('error-count');
-    
+
     if (translationCountEl) translationCountEl.textContent = report.summary.totalRequests;
     if (cacheHitsEl) cacheHitsEl.textContent = report.details.cacheHits;
     if (errorCountEl) errorCountEl.textContent = report.details.errors;
@@ -115,9 +115,9 @@ class DebugTools {
 
   // 测试翻译功能
   async testTranslation() {
-    const testText = "Hello, this is a test translation.";
+    const testText = 'Hello, this is a test translation.';
     this.updateStatus('测试翻译中...');
-    
+
     try {
       const response = await new Promise((resolve) => {
         chrome.runtime.sendMessage({
@@ -126,7 +126,7 @@ class DebugTools {
           targetLanguage: 'zh-CN'
         }, resolve);
       });
-      
+
       if (response && response.success) {
         this.updateStatus(`翻译成功: ${response.translation}`);
         console.log('✅ 翻译测试成功:', response);
@@ -143,39 +143,39 @@ class DebugTools {
   // 模拟字幕显示
   simulateSubtitles() {
     this.updateStatus('模拟字幕中...');
-    
+
     let index = 0;
     const showNextSubtitle = () => {
       if (index >= this.testSubtitles.length) {
         this.updateStatus('模拟完成');
         return;
       }
-      
+
       const subtitle = this.testSubtitles[index];
       this.updateStatus(`显示: ${subtitle.substring(0, 20)}...`);
-      
+
       // 模拟字幕显示
       if (window.bilingualSubtitles) {
         window.bilingualSubtitles.displayBilingualSubtitle(subtitle);
       }
-      
+
       index++;
       setTimeout(showNextSubtitle, 3000); // 每3秒显示下一个
     };
-    
+
     showNextSubtitle();
   }
 
   // 清除所有缓存
   clearAllCache() {
     this.updateStatus('清除缓存中...');
-    
+
     // 清除内存缓存
     if (window.bilingualSubtitles) {
       window.bilingualSubtitles.translationCache.clear();
       window.bilingualSubtitles.translationQueue.clear();
     }
-    
+
     // 清除本地存储缓存
     chrome.runtime.sendMessage({ type: 'CLEAR_CACHE' }, (response) => {
       if (response && response.success) {
@@ -237,7 +237,7 @@ class DebugTools {
         }
       }
     };
-    
+
     console.log('🔧 调试命令已启用:');
     console.log('  debugSubtitles.test() - 测试翻译');
     console.log('  debugSubtitles.simulate() - 模拟字幕');
@@ -249,28 +249,28 @@ class DebugTools {
   // 检查常见问题
   diagnose() {
     const issues = [];
-    
+
     // 检查是否在YouTube视频页面
     if (!window.location.pathname.includes('/watch')) {
       issues.push('不在YouTube视频页面');
     }
-    
+
     // 检查插件是否初始化
     if (!window.bilingualSubtitles) {
       issues.push('插件未初始化');
     }
-    
+
     // 检查是否有字幕容器
     const captionContainer = document.querySelector('.ytp-caption-window-container');
     if (!captionContainer) {
       issues.push('未找到字幕容器');
     }
-    
+
     // 检查设置
     if (window.bilingualSubtitles && !window.bilingualSubtitles.settings.enabled) {
       issues.push('插件已禁用');
     }
-    
+
     return issues;
   }
 }
