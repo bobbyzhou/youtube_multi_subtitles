@@ -29,6 +29,12 @@ pnpm-debug.log*
 .parcel-cache/
 .npm-cache/
 
+# NPM local caches
+.npm/
+npm-cache/
+npm-packages-offline-cache/
+node_modules/.cache/
+
 
 # Test coverage / reports
 coverage/
