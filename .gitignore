@@ -27,6 +27,8 @@ pnpm-debug.log*
 /temp/
 .cache/
 .parcel-cache/
+.npm-cache/
+
 
 # Test coverage / reports
 coverage/
