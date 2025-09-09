@@ -1,0 +1,26 @@
+{
+  "name": "workspace",
+  "version": "1.0.0",
+  "description": "一个Chrome浏览器插件，可以在YouTube视频上显示双语字幕，支持多种翻译语言。",
+  "main": "background.js",
+  "scripts": {
+    "test": "jest --runInBand",
+    "test:ci": "jest --ci --color"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bobbyzhou/youtube_multi_subtitles.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bobbyzhou/youtube_multi_subtitles/issues"
+  },
+  "homepage": "https://github.com/bobbyzhou/youtube_multi_subtitles#readme",
+  "devDependencies": {
+    "jest": "^27.5.1",
+    "jest-chrome": "^0.8.0",
+    "jest-environment-jsdom": "^27.5.1"
+  }
+}

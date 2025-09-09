@@ -14,6 +14,14 @@ const TRANSLATION_CONFIG = {
 // 最近一次翻译所使用的API来源（'v2' | 'free' | null）
 let LAST_API_SOURCE = null;
 
+
+// Detect Extension environment (avoid side effects during Node/Jest tests)
+const __IS_EXTENSION_ENV__ = (typeof chrome !== 'undefined' && !!chrome.runtime);
+
+// 在扩展环境中才注册事件监听器，避免测试环境报错
+if (__IS_EXTENSION_ENV__ && typeof window === 'undefined') {
+
+
 // 安装时初始化
 chrome.runtime.onInstalled.addListener((details) => {
   console.log('YouTube双语字幕插件已安装/更新', details);
@@ -75,10 +83,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       sendResponse({ success: true, source: LAST_API_SOURCE });
       return true;
 
+
     default:
       console.log('Unknown message type:', request.type);
   }
 });
+} // end __IS_EXTENSION_ENV__ guard
+
 
 // 处理翻译请求
 async function handleTranslateRequest(request, sendResponse) {
@@ -175,24 +186,25 @@ async function handleBatchTranslateRequest(request, sendResponse) {
   }
 }
 
-// 验证API Key是否有效
+// 验证API Key是否有效（始终返回布尔值）
 function isValidApiKey(apiKey) {
+  const key = typeof apiKey === 'string' ? apiKey.trim() : '';
   console.log('🔍 检查API Key:', {
     apiKey: apiKey,
     type: typeof apiKey,
-    length: apiKey ? apiKey.length : 0,
-    trimmed: apiKey ? apiKey.trim() : '',
-    startsWithAIza: apiKey ? apiKey.startsWith('AIza') : false
+    length: key.length,
+    trimmed: key,
+    startsWithAIza: key.startsWith('AIza')
   });
 
-  const isValid = apiKey &&
-         typeof apiKey === 'string' &&
-         apiKey.trim().length > 10 && // 至少10个字符
-         apiKey.trim() !== '' &&
-         (apiKey.startsWith('AIza') || apiKey.startsWith('ya29')); // Google API Key格式
+  const isValid = (
+    typeof apiKey === 'string' &&
+    key.length > 10 && // 至少10个字符
+    (key.startsWith('AIza') || key.startsWith('ya29')) // Google API Key格式
+  );
 
   console.log('🔑 API Key验证结果:', isValid);
-  return isValid;
+  return Boolean(isValid);
 }
 
 // 翻译文本
@@ -485,7 +497,15 @@ async function cleanExpiredCache() {
       });
     }
   });
+  }
+
+
+// 兼容测试环境导出可测试的函数
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { isValidApiKey, translateWithFreeAPI, translateText };
 }
 
-// 每小时清理一次过期缓存
-setInterval(cleanExpiredCache, 60 * 60 * 1000);
+// 每小时清理一次过期缓存（仅在扩展Service Worker环境）
+if (__IS_EXTENSION_ENV__ && typeof window === 'undefined') {
+  setInterval(cleanExpiredCache, 60 * 60 * 1000);
+}
