@@ -24,7 +24,9 @@ class BilingualSubtitles {
       translationDelay: 50,
       hideYouTubeCaptions: true,
       stableLayout: true,           // 预留空间，避免上下/左右跳动
-      reserveLines: 2               // 预留的行数（用于容器高度）
+      reserveLines: 2,              // 预留的行数（用于容器高度）
+      showLoadingIndicator: true,   // 是否显示“翻译中...”提示
+      autoReserveLines: true        // 根据是否显示原文自动调整预留行数
     };
 
     this.currentSubtitles = [];
@@ -126,7 +128,7 @@ class BilingualSubtitles {
     // 应用稳定布局类
     if (this.subtitleContainer) {
       this.subtitleContainer.classList.toggle('reserve-space', !!this.settings.stableLayout);
-      this.subtitleContainer.style.setProperty('--bs-reserve-lines', String(this.settings.reserveLines || 2));
+      this.subtitleContainer.style.setProperty('--bs-reserve-lines', String(this.getEffectiveReserveLines()));
     }
 
     // 为跳转/倍速建立保护
@@ -160,7 +162,7 @@ class BilingualSubtitles {
       // 稳定布局
       if (this.settings.stableLayout) {
         this.subtitleContainer.classList.add('reserve-space');
-        this.subtitleContainer.style.setProperty('--bs-reserve-lines', String(this.settings.reserveLines || 2));
+        this.subtitleContainer.style.setProperty('--bs-reserve-lines', String(this.getEffectiveReserveLines()));
       }
 
     // 添加到视频播放器
@@ -445,12 +447,22 @@ class BilingualSubtitles {
   aggressivePrefetchTick() {
     const level = this.settings.prefetchAggressive || 'off';
     if (level === 'off') return;
+
     const defaults = { low: 600, medium: 300, high: 120 };
     if (!this.settings.prefetchIntervalMs) {
       this.settings.prefetchIntervalMs = defaults[level] || 300;
     }
     try { this.preTranslateUpcomingSubtitles(); } catch (e) {}
   }
+
+  // 计算有效的预留行数：当关闭“显示原文”且开启 autoReserveLines 时，减少一行
+  getEffectiveReserveLines() {
+    const base = Math.max(1, Number(this.settings.reserveLines || 2));
+    if (!this.settings.autoReserveLines) return base;
+    const needOriginal = !!this.settings.showOriginal;
+    return needOriginal ? base : Math.max(1, base - 1);
+  }
+
 
 
   async batchPreTranslate(texts) {
@@ -631,12 +643,14 @@ class BilingualSubtitles {
     // 控制“翻译中...”延迟展示窗口
     clearTimeout(this.loadingTimerId);
     this.dom.translatedEl.style.display = 'none';
-    this.loadingTimerId = setTimeout(() => {
-      if (this.lastSubtitleText === originalText && this.dom.translatedEl) {
-        this.dom.translatedEl.textContent = '翻译中...';
-        this.dom.translatedEl.style.display = 'inline-block';
-      }
-    }, Math.max(120, this.settings.translationDelay || 0));
+    if (this.settings.showLoadingIndicator) {
+      this.loadingTimerId = setTimeout(() => {
+        if (this.lastSubtitleText === originalText && this.dom.translatedEl) {
+          this.dom.translatedEl.textContent = '翻译中...';
+          this.dom.translatedEl.style.display = 'inline-block';
+        }
+      }, Math.max(120, this.settings.translationDelay || 0));
+    }
 
     try {
       // 如果已有相同文本的翻译在进行中，则共用结果，避免重复请求
@@ -876,7 +890,7 @@ class BilingualSubtitles {
       this.subtitleContainer.className = `bilingual-subtitles-container position-${this.settings.displayPosition} size-${this.settings.fontSize} ${this.settings.animationEnabled ? 'animations-enabled' : 'animations-disabled'}`;
       // 稳定布局参数
       this.subtitleContainer.classList.toggle('reserve-space', !!this.settings.stableLayout);
-      this.subtitleContainer.style.setProperty('--bs-reserve-lines', String(this.settings.reserveLines || 2));
+      this.subtitleContainer.style.setProperty('--bs-reserve-lines', String(this.getEffectiveReserveLines()));
       // 同步原生字幕隐藏状态
       const player = document.querySelector('.html5-video-player');
       if (player) {

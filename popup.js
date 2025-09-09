@@ -19,6 +19,8 @@ document.addEventListener('DOMContentLoaded', function() {
   const prefetchIntervalMsSelect = document.getElementById('prefetchIntervalMs');
   const stableLayoutToggle = document.getElementById('stableLayout');
   const reserveLinesSelect = document.getElementById('reserveLines');
+  const autoReserveLinesToggle = document.getElementById('autoReserveLines');
+  const showLoadingIndicatorToggle = document.getElementById('showLoadingIndicator');
   const clearCacheBtn = document.getElementById('clearCacheBtn');
   const saveBtn = document.getElementById('saveBtn');
   const statusDiv = document.getElementById('status');
@@ -38,6 +40,8 @@ document.addEventListener('DOMContentLoaded', function() {
     prefetchIntervalMs: 300,
     stableLayout: true,
     reserveLines: 2,
+    autoReserveLines: true,
+    showLoadingIndicator: true,
     showOriginal: true,
     animationEnabled: true,
     translationDelay: 50,
@@ -69,6 +73,8 @@ document.addEventListener('DOMContentLoaded', function() {
       prefetchIntervalMsSelect.value = settings.prefetchIntervalMs;
       stableLayoutToggle.checked = settings.stableLayout;
       reserveLinesSelect.value = settings.reserveLines;
+      autoReserveLinesToggle.checked = settings.autoReserveLines;
+      showLoadingIndicatorToggle.checked = settings.showLoadingIndicator;
       showOriginalToggle.checked = settings.showOriginal;
       hideYouTubeCaptionsToggle.checked = settings.hideYouTubeCaptions;
       animationEnabledToggle.checked = settings.animationEnabled;
@@ -92,6 +98,8 @@ document.addEventListener('DOMContentLoaded', function() {
       prefetchIntervalMs: parseInt(prefetchIntervalMsSelect.value),
       stableLayout: stableLayoutToggle.checked,
       reserveLines: parseInt(reserveLinesSelect.value),
+      autoReserveLines: autoReserveLinesToggle.checked,
+      showLoadingIndicator: showLoadingIndicatorToggle.checked,
       showOriginal: showOriginalToggle.checked,
       hideYouTubeCaptions: hideYouTubeCaptionsToggle.checked,
       animationEnabled: animationEnabledToggle.checked,
@@ -140,7 +148,8 @@ document.addEventListener('DOMContentLoaded', function() {
   // 监听设置变化，实时预览
   [enabledToggle, targetLanguageSelect, displayPositionSelect, fontSizeSelect,
    apiPreferenceSelect, apiKeyInput, cacheTimeSelect, preTranslateToggle, prefetchAggressiveSelect, prefetchLookaheadSelect, prefetchIntervalMsSelect,
-   stableLayoutToggle, reserveLinesSelect, showOriginalToggle, hideYouTubeCaptionsToggle, animationEnabledToggle, translationDelaySelect].forEach(element => {
+   stableLayoutToggle, reserveLinesSelect, autoReserveLinesToggle, showLoadingIndicatorToggle,
+   showOriginalToggle, hideYouTubeCaptionsToggle, animationEnabledToggle, translationDelaySelect].forEach(element => {
     element.addEventListener('change', function() {
       // 可以在这里添加实时预览逻辑
       console.log('Setting changed:', element.id, element.value || element.checked);
