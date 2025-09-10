@@ -43,6 +43,12 @@ coverage/
 .nyc_output/
 reports/
 
+# Playwright / E2E artifacts
+/dist-e2e/
+/e2e/.pw-user/
+/test-results/
+/playwright-report/
+
 # Environment files
 .env
 .env.*

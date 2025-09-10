@@ -53,27 +53,47 @@ test.describe('Extension loads and injects content script', () => {
     await expect(page.locator('.header h1')).toHaveText(/YouTube双语字幕/);
   });
 
-  test.fixme('injects on /watch and exposes global', async () => {
+  test('injects on /watch and exposes global (grant host permission via popup)', async () => {
+    // 1) Derive extension id from service worker URL
+    const sw = context.serviceWorkers().find(sw => sw.url().startsWith('chrome-extension://'));
+    expect(sw, 'service worker not found').toBeTruthy();
+    const extensionId = new URL(sw.url()).hostname;
+
+    // 2) Open popup and request host permission for localhost via a user-gesture click
+    const popup = await context.newPage();
+    await popup.goto(`chrome-extension://${extensionId}/popup.html`, { waitUntil: 'load' });
+    await popup.evaluate(() => {
+      const btn = document.createElement('button');
+      btn.id = 'e2e-request-perm';
+      btn.textContent = 'Grant host perm';
+      btn.onclick = async () => {
+        try {
+          const granted = await chrome.permissions.request({ origins: ['http://localhost:5173/*'] });
+          // expose result for the test to read
+          window.__permGranted = granted;
+        } catch (e) {
+          window.__permError = String(e);
+        }
+      };
+      document.body.appendChild(btn);
+    });
+    await popup.click('#e2e-request-perm');
+    await expect.poll(async () => popup.evaluate(() => Boolean(window.__permGranted))).toBe(true);
+
+    // 3) Navigate to localhost watch page and wait for content script globals
     const page = await context.newPage();
     page.on('console', m => console.log('[page console]', m.type(), m.text()));
     await page.goto('http://localhost:5173/watch?v=abc', { waitUntil: 'load' });
 
-    // Wait for content script globals exposed by content.js
-    await expect.poll(async () => page.evaluate(() => {
-      return typeof window.bilingualSubtitles !== 'undefined' && typeof window.BilingualSubtitles !== 'undefined';
-    }), { timeout: 15000 }).toBe(true);
-
-    // Force a minimal render to the container and assert DOM
-    await page.evaluate(() => {
-      window.bilingualSubtitles.startSubtitleExtraction?.();
-      window.bilingualSubtitles.displayBilingualSubtitle?.('Hello');
-    });
-
+    // 4) Assert that content script injected container into page DOM (content scripts run in isolated world)
     const container = page.locator('.bilingual-subtitles-container');
-    await expect(container).toBeVisible({ timeout: 5000 });
+    await expect(container).toBeVisible({ timeout: 15000 });
 
-    const original = page.locator('.bilingual-subtitles-container .original-subtitle');
-    await expect(original).toContainText('Hello');
+    // Ensure container has expected structure
+    await expect(page.locator('.bilingual-subtitles-container .subtitle-inner')).toBeVisible();
+
+    // Note: Globals defined in content script are not visible to page JS context by design (isolated world),
+    // so we validate via DOM effects instead of window.* checks.
   });
 });
 

@@ -49,7 +49,7 @@ describe('background translateText with official API', () => {
     });
 
     // Mock v2 failing, free succeeding
-    global.fetch.mockImplementation((url, opts) => {
+    global.fetch.mockImplementation((url, _opts) => {
       const u = String(url);
       if (u.includes('translation.googleapis.com')) {
         return Promise.resolve({ ok: false, status: 500, statusText: 'Err', json: async () => ({}) });

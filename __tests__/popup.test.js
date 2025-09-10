@@ -1,12 +1,12 @@
 /**
  * @jest-environment jsdom
  */
-const { chrome } = require('jest-chrome');
+const jestChrome = require('jest-chrome').chrome;
 
 describe('popup.js UI interactions', () => {
   beforeEach(() => {
     // Ensure global chrome is available to popup.js
-    global.chrome = chrome;
+    global.chrome = jestChrome;
     chrome.storage = chrome.storage || {};
     chrome.storage.sync = chrome.storage.sync || { get: jest.fn(), set: jest.fn() };
     chrome.runtime = chrome.runtime || { sendMessage: jest.fn() };
