@@ -85,12 +85,38 @@ test.describe('Extension loads and injects content script', () => {
     page.on('console', m => console.log('[page console]', m.type(), m.text()));
     await page.goto('http://localhost:5173/watch?v=abc', { waitUntil: 'load' });
 
-    // 4) Assert that content script injected container into page DOM (content scripts run in isolated world)
+    // 4) Inject synthetic YouTube captions DOM to trigger content script extraction/rendering
+    await page.evaluate(() => {
+      // ensure player exists
+      let player = document.querySelector('.html5-video-player');
+      if (!player) {
+        player = document.createElement('div');
+        player.className = 'html5-video-player';
+        document.body.appendChild(player);
+      }
+      // ensure caption container exists
+      let cap = document.querySelector('.ytp-caption-window-container');
+      if (!cap) {
+        cap = document.createElement('div');
+        cap.className = 'ytp-caption-window-container';
+        player.appendChild(cap);
+      }
+      // push a caption text node
+      const span = document.createElement('span');
+      span.className = 'captions-text';
+      span.textContent = 'Hello';
+      cap.appendChild(span);
+    });
+
+    // 5) Assert that our container becomes visible and reflects the original text
     const container = page.locator('.bilingual-subtitles-container');
     await expect(container).toBeVisible({ timeout: 15000 });
 
-    // Ensure container has expected structure
-    await expect(page.locator('.bilingual-subtitles-container .subtitle-inner')).toBeVisible();
+    const original = page.locator('.bilingual-subtitles-container .original-subtitle');
+    await expect(original).toContainText('Hello', { timeout: 15000 });
+
+    // Ensure container has expected structure (subtitle-inner might be absent in current markup, so check essential nodes)
+    await expect(page.locator('.bilingual-subtitles-container .translated-subtitle')).toBeVisible();
 
     // Note: Globals defined in content script are not visible to page JS context by design (isolated world),
     // so we validate via DOM effects instead of window.* checks.
