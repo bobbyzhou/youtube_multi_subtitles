@@ -11,7 +11,6 @@
     "lint:fix": "eslint *.js __tests__/*.js --fix",
     "test:watch": "jest --watch --runInBand",
     "build:ext": "node scripts/build-extension.js",
-
     "e2e:build": "node e2e/build-extension.js",
     "e2e:test": "playwright test",
     "e2e": "npm run e2e:build && playwright test",
@@ -30,6 +29,7 @@
   "homepage": "https://github.com/bobbyzhou/youtube_multi_subtitles#readme",
   "devDependencies": {
     "@eslint/js": "^9.35.0",
+    "@playwright/test": "^1.55.0",
     "eslint": "^9.35.0",
     "jest": "^27.5.1",
     "jest-chrome": "^0.8.0",
