@@ -47,6 +47,10 @@ class BilingualSubtitles {
     this.loadingTimerId = null;
     this.requestSeq = 0; // 当前翻译请求序号，用于避免过期渲染
 
+    // 自动生成英文（或增量字幕）合并与去抖
+    this.autogenAccumulatedText = '';
+    this.autogenDebounceTimer = null;
+
     // 健康监控与观察器
     this.healthCheckInterval = null;
     this.playerObserver = null;
@@ -356,6 +360,10 @@ class BilingualSubtitles {
       console.log('⏸️ Seeking event - 暂停字幕提取');
       clearTimeout(this.extractTimeout);
       this.extractTimeout = null;
+      // 清理增量合并状态
+      clearTimeout(this.autogenDebounceTimer);
+      this.autogenDebounceTimer = null;
+      this.autogenAccumulatedText = '';
       this.lastSubtitleText = '';
       this.clearSubtitleDisplay();
       // 暂停周期检查，避免在跳转瞬间误判
@@ -367,6 +375,10 @@ class BilingualSubtitles {
     const onSeeked = () => {
       console.log('🔄 Seeked event - 开始恢复字幕提取');
       console.log('🧹 强制重置 lastSubtitleText');
+      // 清理增量合并状态并重置
+      clearTimeout(this.autogenDebounceTimer);
+      this.autogenDebounceTimer = null;
+      this.autogenAccumulatedText = '';
       this.lastSubtitleText = ''; // 强制重置，确保下次提取会被认为是新字幕
 
       // 强制重新创建容器，确保跳转后显示正常
@@ -553,6 +565,58 @@ class BilingualSubtitles {
     }
 
     if (subtitleText && subtitleText !== this.lastSubtitleText) {
+      // 检测是否为前缀扩展（auto-generated 英文常见的增量追加）
+      const base = this.autogenAccumulatedText || this.lastSubtitleText || '';
+      const isPrefixExtension = !!base && subtitleText.startsWith(base) && !subtitleText.includes('\n') && (subtitleText.length - base.length) <= 20;
+      const isSeedIncrement = !this.lastSubtitleText && !this.autogenAccumulatedText && !subtitleText.includes('\n') && subtitleText.length <= 20;
+
+      if (isPrefixExtension || isSeedIncrement) {
+        // 记录增量原文并只更新原文UI，不立刻触发翻译
+        this.autogenAccumulatedText = subtitleText;
+        try {
+          if (!this.subtitleContainer || !document.body.contains(this.subtitleContainer)) {
+            this.createSubtitleContainer();
+          }
+          const needsBase = !this.dom.originalEl || !this.dom.translatedEl || this.subtitleContainer.innerHTML.trim() === '';
+          if (needsBase) {
+            this.subtitleContainer.innerHTML = `
+              <div class="original-subtitle"></div>
+              <div class="translated-subtitle loading" style="display:none"></div>
+            `;
+            this.dom.originalEl = this.subtitleContainer.querySelector('.original-subtitle');
+            this.dom.translatedEl = this.subtitleContainer.querySelector('.translated-subtitle');
+          } else {
+            this.dom.translatedEl.classList.remove('success', 'error');
+            this.dom.translatedEl.classList.add('loading');
+          }
+          if (this.settings.showOriginal) {
+            this.dom.originalEl.style.display = '';
+            if (this.dom.originalEl.textContent !== subtitleText) {
+              this.dom.originalEl.textContent = subtitleText;
+            }
+          } else {
+            this.dom.originalEl.style.display = 'none';
+          }
+        } catch (_e) {}
+
+        clearTimeout(this.autogenDebounceTimer);
+        // 稳定窗口：translationDelay 基础上增加缓冲
+        const waitMs = Math.max(200, this.settings.translationDelay || 0) + 100;
+        this.autogenDebounceTimer = setTimeout(() => {
+          if (this.autogenAccumulatedText === subtitleText) {
+            console.log('⏱️ 稳定窗口结束，开始翻译:', subtitleText);
+            this.lastSubtitleText = subtitleText;
+            this.displayBilingualSubtitle(subtitleText);
+            this.autogenAccumulatedText = '';
+          }
+        }, waitMs);
+        return;
+      }
+
+      // 非前缀扩展，直接翻译并重置增量状态
+      this.autogenAccumulatedText = '';
+      clearTimeout(this.autogenDebounceTimer);
+
       console.log('✅ 新字幕文本，开始翻译:', subtitleText);
       console.log('📊 lastSubtitleText 从', this.lastSubtitleText, '更新为', subtitleText);
       this.lastSubtitleText = subtitleText;
