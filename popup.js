@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const autoReserveLinesToggle = document.getElementById('autoReserveLines');
   const showLoadingIndicatorToggle = document.getElementById('showLoadingIndicator');
   const previewDuringIncrementalToggle = document.getElementById('previewDuringIncremental');
+  const autoClearCacheOnStrategySwitchToggle = document.getElementById('autoClearCacheOnStrategySwitch');
   const clearCacheBtn = document.getElementById('clearCacheBtn');
   const saveBtn = document.getElementById('saveBtn');
   const statusDiv = document.getElementById('status');
@@ -33,6 +34,7 @@ document.addEventListener('DOMContentLoaded', function() {
     displayPosition: 'bottom',
     fontSize: 'medium',
     apiPreference: 'auto',
+    autoClearCacheOnStrategySwitch: true,
     apiKey: '',
     cacheTime: 24,
     preTranslate: true,
@@ -67,6 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
       displayPositionSelect.value = settings.displayPosition;
       fontSizeSelect.value = settings.fontSize;
       apiPreferenceSelect.value = settings.apiPreference;
+      autoClearCacheOnStrategySwitchToggle.checked = settings.autoClearCacheOnStrategySwitch;
       apiKeyInput.value = settings.apiKey;
       cacheTimeSelect.value = settings.cacheTime;
       preTranslateToggle.checked = settings.preTranslate;
@@ -93,6 +96,7 @@ document.addEventListener('DOMContentLoaded', function() {
       displayPosition: displayPositionSelect.value,
       fontSize: fontSizeSelect.value,
       apiPreference: apiPreferenceSelect.value,
+      autoClearCacheOnStrategySwitch: autoClearCacheOnStrategySwitchToggle.checked,
       apiKey: apiKeyInput.value.trim(),
       cacheTime: parseInt(cacheTimeSelect.value),
       preTranslate: preTranslateToggle.checked,
@@ -159,7 +163,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // 监听设置变化，实时预览
   [enabledToggle, targetLanguageSelect, displayPositionSelect, fontSizeSelect,
-   apiPreferenceSelect, apiKeyInput, cacheTimeSelect, preTranslateToggle, prefetchAggressiveSelect, prefetchLookaheadSelect, prefetchIntervalMsSelect,
+   apiPreferenceSelect, autoClearCacheOnStrategySwitchToggle, apiKeyInput, cacheTimeSelect, preTranslateToggle, prefetchAggressiveSelect, prefetchLookaheadSelect, prefetchIntervalMsSelect,
    stableLayoutToggle, reserveLinesSelect, autoReserveLinesToggle, showLoadingIndicatorToggle, previewDuringIncrementalToggle,
    showOriginalToggle, hideYouTubeCaptionsToggle, animationEnabledToggle, translationDelaySelect].forEach(element => {
     element.addEventListener('change', function() {

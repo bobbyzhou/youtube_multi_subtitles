@@ -19,6 +19,7 @@ describe('popup.js UI interactions', () => {
         <select id="displayPosition"><option value="bottom">bottom</option></select>
         <select id="fontSize"><option value="medium">medium</option></select>
         <select id="apiPreference"><option value="auto">auto</option><option value="v2">v2</option></select>
+        <input type="checkbox" id="autoClearCacheOnStrategySwitch" />
         <input id="apiKey" />
         <select id="cacheTime"><option value="24">24</option></select>
         <input type="checkbox" id="preTranslate" />
@@ -49,6 +50,7 @@ describe('popup.js UI interactions', () => {
         displayPosition: 'bottom',
         fontSize: 'medium',
         apiPreference: 'auto',
+        autoClearCacheOnStrategySwitch: true,
         apiKey: '',
         cacheTime: 24,
         preTranslate: true,

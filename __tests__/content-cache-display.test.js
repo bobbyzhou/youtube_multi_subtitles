@@ -46,7 +46,9 @@ describe('BilingualSubtitles cache display and utilities', () => {
   test('displayBilingualSubtitle uses cached translation and forces visibility', async () => {
     const originalText = 'Hello world';
     const translated = '\u4f60\u597d\u4e16\u754c';
-    const cacheKey = `${instance.settings.targetLanguage}-${originalText}`;
+    instance.settings.apiPreference = 'auto';
+    instance.getCurrentVideoId = jest.fn(() => 'vid');
+    const cacheKey = `${instance.settings.targetLanguage}-${(instance.settings.apiPreference || 'auto')}-vid-${originalText}`;
     instance.translationCache.set(cacheKey, translated);
 
     await instance.displayBilingualSubtitle(originalText);

@@ -119,6 +119,20 @@ class BilingualSubtitles {
     return window.location.pathname === '/watch' && window.location.search.includes('v=');
   }
 
+  getCurrentVideoId() {
+    try {
+      const u = new URL(window.location.href);
+      if (u.hostname.includes('youtu.be')) {
+        const id = (u.pathname || '').replace(/^\//, '').trim();
+        return id || null;
+      }
+      return u.searchParams.get('v') || null;
+    } catch (_e) {
+      return null;
+    }
+  }
+
+
   async waitForVideoPlayer() {
     return new Promise((resolve) => {
       const checkPlayer = () => {
@@ -533,7 +547,8 @@ class BilingualSubtitles {
         chrome.runtime.sendMessage({
           type: 'TRANSLATE_BATCH',
           texts: unique,
-          targetLanguage: this.settings.targetLanguage
+          targetLanguage: this.settings.targetLanguage,
+          videoId: this.getCurrentVideoId()
         }, resolve);
 
     // 渲染前确保容器存在且可见
@@ -688,7 +703,7 @@ class BilingualSubtitles {
     }
 
     // 检查内存缓存
-    const cacheKey = `${this.settings.targetLanguage}-${originalText}`;
+    const cacheKey = `${this.settings.targetLanguage}-${(this.settings.apiPreference || 'auto')}-${(this.getCurrentVideoId() || 'na')}-${originalText}`;
     const cachedTranslation = this.translationCache.get(cacheKey);
 
     if (cachedTranslation) {
@@ -966,7 +981,8 @@ class BilingualSubtitles {
       chrome.runtime.sendMessage({
         type: 'TRANSLATE_TEXT',
         text: text,
-        targetLanguage: this.settings.targetLanguage
+        targetLanguage: this.settings.targetLanguage,
+        videoId: this.getCurrentVideoId()
       }, (response) => {
         if (response && response.success) {
           resolve(response.translation);

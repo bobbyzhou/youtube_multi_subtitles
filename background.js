@@ -47,7 +47,8 @@ chrome.runtime.onInstalled.addListener((details) => {
     animationEnabled: true,
     translationDelay: 50,
     hideYouTubeCaptions: true,
-    apiPreference: 'auto' // 'auto' | 'v2' | 'free'
+    apiPreference: 'auto', // 'auto' | 'v2' | 'free'
+    autoClearCacheOnStrategySwitch: true
   };
 
   if (details && details.reason === 'install') {
@@ -93,18 +94,55 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       return true;
 
     case 'SETTINGS_UPDATED': {
-      const newPref = request.settings?.apiPreference;
-      if (newPref && newPref !== CURRENT_API_PREFERENCE) {
-        CURRENT_API_PREFERENCE = newPref;
-        // 偏好变更：清理翻译缓存，避免旧策略的结果继续命中
-        chrome.storage.local.clear(() => {
-          console.log('Cleared translation cache due to apiPreference change ->', newPref);
-          sendResponse({ success: true, cleared: true });
+      const settings = request.settings || {};
+      const newPref = settings.apiPreference;
+      const targetLanguage = settings.targetLanguage;
+      const autoClear = settings.autoClearCacheOnStrategySwitch !== false; // 默认清理
+
+      const proceed = (videoId) => {
+        if (newPref && newPref !== CURRENT_API_PREFERENCE) {
+          CURRENT_API_PREFERENCE = newPref;
+          if (!autoClear) {
+            sendResponse({ success: true, cleared: false, reason: 'autoClear disabled' });
+            return;
+          }
+          // 按“语言 + 视频ID”进行局部清理（兼容 videoId 为空的情况）
+          chrome.storage.local.get(null, (items) => {
+            const vid = videoId || 'na';
+            const keysToRemove = Object.keys(items).filter(k =>
+              (typeof targetLanguage === 'string' ? k.includes(`-${targetLanguage}-`) : true) &&
+              k.includes(`-${vid}-`)
+            );
+            if (keysToRemove.length > 0) {
+              chrome.storage.local.remove(keysToRemove, () => {
+                console.log(`Cleared ${keysToRemove.length} cache entries for lang=${targetLanguage} video=${vid} due to apiPreference change ->`, newPref);
+                sendResponse({ success: true, cleared: true, count: keysToRemove.length });
+              });
+            } else {
+              sendResponse({ success: true, cleared: false, count: 0 });
+            }
+          });
+          return true;
+        }
+        sendResponse({ success: true, cleared: false });
+        return true;
+      };
+
+      // 尝试获取当前活动 YouTube 页的视频ID
+      if (request.videoId) {
+        return proceed(request.videoId);
+      }
+      try {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          const url = tabs && tabs[0] && tabs[0].url;
+          const videoId = parseVideoIdFromUrl(url);
+          proceed(videoId);
         });
         return true;
+      } catch (e) {
+        // 获取失败时，退化为不带 videoId 的清理
+        return proceed(null);
       }
-      sendResponse({ success: true, cleared: false });
-      return true;
     }
 
 
@@ -117,13 +155,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 // 处理翻译请求
 async function handleTranslateRequest(request, sendResponse) {
-  const { text, targetLanguage, sourceLanguage = 'auto' } = request;
+  const { text, targetLanguage, sourceLanguage = 'auto', videoId } = request;
 
   try {
     // 获取用户设置
     const settings = await getSettings();
     const apiPref = settings.apiPreference || 'auto';
-    const cacheKey = `${sourceLanguage}-${targetLanguage}-${apiPref}-${text}`;
+    const cacheKey = `${sourceLanguage}-${targetLanguage}-${apiPref}-${(videoId || 'na')}-${text}`;
 
     // 首先检查缓存
     const cached = await getCachedTranslation(cacheKey, settings.cacheTime);
@@ -161,7 +199,7 @@ async function handleTranslateRequest(request, sendResponse) {
 
 // 处理批量翻译请求
 async function handleBatchTranslateRequest(request, sendResponse) {
-  const { texts, targetLanguage, sourceLanguage = 'auto' } = request;
+  const { texts, targetLanguage, sourceLanguage = 'auto', videoId } = request;
 
   try {
     const settings = await getSettings();
@@ -173,7 +211,7 @@ async function handleBatchTranslateRequest(request, sendResponse) {
     for (let i = 0; i < texts.length; i++) {
       const text = texts[i];
       const apiPref = settings.apiPreference || 'auto';
-      const cacheKey = `${sourceLanguage}-${targetLanguage}-${apiPref}-${text}`;
+      const cacheKey = `${sourceLanguage}-${targetLanguage}-${apiPref}-${(videoId || 'na')}-${text}`;
       const cached = await getCachedTranslation(cacheKey, settings.cacheTime);
 
       if (cached) {
@@ -197,7 +235,7 @@ async function handleBatchTranslateRequest(request, sendResponse) {
 
         // 缓存结果（包含 apiPreference 以避免策略切换后命中旧缓存）
         const apiPref = settings.apiPreference || 'auto';
-        const cacheKey = `${sourceLanguage}-${targetLanguage}-${apiPref}-${text}`;
+        const cacheKey = `${sourceLanguage}-${targetLanguage}-${apiPref}-${(videoId || 'na')}-${text}`;
         await cacheTranslation(cacheKey, translation, settings.cacheTime);
       }
     }
@@ -495,11 +533,13 @@ async function getSettings() {
       animationEnabled: true,
       translationDelay: 50,
       hideYouTubeCaptions: true,
-      apiPreference: 'auto'
+      apiPreference: 'auto',
+      autoClearCacheOnStrategySwitch: true
     };
 
     chrome.storage.sync.get(defaultSettings, (settings) => {
       // 确保API Key为空字符串时被正确处理
+
       if (!settings.apiKey || settings.apiKey.trim() === '') {
         settings.apiKey = '';
       }
@@ -522,6 +562,8 @@ async function handleGetSettings(sendResponse) {
 async function cleanExpiredCache() {
   chrome.storage.local.get(null, (items) => {
     const keysToRemove = [];
+// 从URL解析 YouTube 视频ID
+
     const now = Date.now();
 
     for (const [key, value] of Object.entries(items)) {
@@ -538,6 +580,22 @@ async function cleanExpiredCache() {
   });
   }
 
+
+// 从URL解析 YouTube 视频ID
+function parseVideoIdFromUrl(url) {
+  if (!url || typeof url !== 'string') return null;
+  try {
+    const u = new URL(url);
+    if (u.hostname.includes('youtu.be')) {
+      const id = (u.pathname || '').replace(/^\//, '').trim();
+      return id || null;
+    }
+    const v = u.searchParams.get('v');
+    return v || null;
+  } catch (_e) {
+    return null;
+  }
+}
 
 // 兼容测试环境导出可测试的函数
 if (typeof module !== 'undefined' && module.exports) {
