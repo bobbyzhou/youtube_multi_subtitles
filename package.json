@@ -10,7 +10,12 @@
     "lint": "eslint *.js __tests__/*.js",
     "lint:fix": "eslint *.js __tests__/*.js --fix",
     "test:watch": "jest --watch --runInBand",
-    "build:ext": "node scripts/build-extension.js"
+    "build:ext": "node scripts/build-extension.js",
+
+    "e2e:build": "node e2e/build-extension.js",
+    "e2e:test": "playwright test",
+    "e2e": "npm run e2e:build && playwright test",
+    "e2e:ci": "npm run e2e:build && playwright test --reporter=line"
   },
   "repository": {
     "type": "git",
