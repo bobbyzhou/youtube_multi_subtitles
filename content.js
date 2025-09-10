@@ -62,6 +62,13 @@ class BilingualSubtitles {
     this.playerObserver = null;
     this.captionsObserver = null;
 
+    // 记录事件处理函数用于后续移除，避免资源消耗
+    this._onSeeking = null;
+    this._onSeeked = null;
+    this._onRateChange = null;
+    this._onTimeUpdate = null;
+
+
 
     if (!this.options.skipInit) {
       this.init();
@@ -362,7 +369,8 @@ class BilingualSubtitles {
     if (!this.videoElement) return;
 
     // 在 seek 前后，短暂暂停提取并清理状态，避免抓到过期 DOM
-    const onSeeking = () => {
+    this._onSeeking = () => {
+      if (!this.settings.enabled) return;
       console.log('⏸️ Seeking event - 暂停字幕提取');
       clearTimeout(this.extractTimeout);
       this.extractTimeout = null;
@@ -378,7 +386,8 @@ class BilingualSubtitles {
       if (this.observer) { try { this.observer.disconnect(); } catch (_e) {} this.observer = null; }
     };
 
-    const onSeeked = () => {
+    this._onSeeked = () => {
+      if (!this.settings.enabled) return;
       console.log('🔄 Seeked event - 开始恢复字幕提取');
       console.log('🧹 强制重置 lastSubtitleText');
       // 清理增量合并状态并重置
@@ -410,41 +419,45 @@ class BilingualSubtitles {
       }, 800);
     };
 
-    const onRateChange = () => {
+    this._onRateChange = () => {
+      if (!this.settings.enabled) return;
       // 倍速变化时也重置一次状态，确保能继续提取
       this.reattachObservers();
       setTimeout(() => this.extractCurrentSubtitle(), 80);
     };
 
     console.log('🎯 设置播放事件监听器，videoElement:', this.videoElement);
-    this.videoElement.addEventListener('seeking', onSeeking);
-    this.videoElement.addEventListener('seeked', onSeeked);
-    this.videoElement.addEventListener('ratechange', onRateChange);
+    this.videoElement.addEventListener('seeking', this._onSeeking);
+    this.videoElement.addEventListener('seeked', this._onSeeked);
+    this.videoElement.addEventListener('ratechange', this._onRateChange);
 
-    // 测试事件是否正常工作
-    this.videoElement.addEventListener('timeupdate', () => {
-      // 每10秒输出一次，确认事件监听正常
+    // 测试事件是否正常工作（仅日志，不触发翻译）
+    this.videoElement.addEventListener('timeupdate', (this._onTimeUpdateLog || (this._onTimeUpdateLog = () => {
+      if (!this.videoElement) return;
       if (Math.floor(this.videoElement.currentTime) % 10 === 0) {
         console.log('⏰ 时间更新事件正常，当前时间:', this.videoElement.currentTime);
       }
-    });
+    })));
   }
 
 
   setupVideoTimeListener() {
-    if (this.videoElement) {
-      this.videoElement.addEventListener('timeupdate', () => {
-        // 预翻译功能：如果启用了预翻译，尝试获取即将出现的字幕
-        if (this.settings.preTranslate) {
-          this.preTranslateUpcomingSubtitles();
-        }
-        // 更加激进的预取（可配置）
-        this.aggressivePrefetchTick && this.aggressivePrefetchTick();
-      });
-    }
+    if (!this.videoElement) return;
+    // 记录回调，便于禁用时移除
+    this._onTimeUpdate = () => {
+      if (!this.settings.enabled) return;
+      // 预翻译功能：如果启用了预翻译，尝试获取即将出现的字幕
+      if (this.settings.preTranslate) {
+        this.preTranslateUpcomingSubtitles();
+      }
+      // 更加激进的预取（可配置）
+      this.aggressivePrefetchTick && this.aggressivePrefetchTick();
+    };
+    this.videoElement.addEventListener('timeupdate', this._onTimeUpdate);
   }
 
   preTranslateUpcomingSubtitles() {
+    if (!this.settings.enabled) return;
     if (this.settings.prefetchAggressive === 'off') return;
     // 这是一个简化的预翻译实现
     // 在实际应用中，可以通过分析字幕时间轴来预测即将出现的字幕
@@ -472,6 +485,7 @@ class BilingualSubtitles {
 
   // 更加激进的预取心跳（根据设置动态节流）
   aggressivePrefetchTick() {
+    if (!this.settings.enabled) return;
     const level = this.settings.prefetchAggressive || 'off';
     if (level === 'off') return;
 
@@ -493,6 +507,7 @@ class BilingualSubtitles {
 
 
   async batchPreTranslate(texts) {
+    if (!this.settings.enabled) return;
     // 去重并过滤已在队列/缓存中的条目
     const targetLang = this.settings.targetLanguage;
     const unique = [];
@@ -536,6 +551,7 @@ class BilingualSubtitles {
   }
 
   extractCurrentSubtitle() {
+    if (!this.settings.enabled) return;
     console.log('🔍 开始提取字幕');
     // 尝试多种选择器来获取字幕文本
     const selectors = [
@@ -659,6 +675,7 @@ class BilingualSubtitles {
   }
 
   async displayBilingualSubtitle(originalText, opts = {}) {
+    if (!this.settings.enabled) return;
     console.log('🎨 开始显示双语字幕:', originalText);
     // 若容器缺失或被移除，先自愈创建
     if (!this.subtitleContainer || !document.body.contains(this.subtitleContainer)) {
@@ -1017,9 +1034,20 @@ class BilingualSubtitles {
   }
 
   stopSubtitleExtraction() {
+    // 停止监听 video 事件，避免持续触发预取/预翻译
+    if (this.videoElement) {
+      if (this._onSeeking) this.videoElement.removeEventListener('seeking', this._onSeeking);
+      if (this._onSeeked) this.videoElement.removeEventListener('seeked', this._onSeeked);
+      if (this._onRateChange) this.videoElement.removeEventListener('ratechange', this._onRateChange);
+      if (this._onTimeUpdate) this.videoElement.removeEventListener('timeupdate', this._onTimeUpdate);
+      // 测试用的 timeupdate 日志监听
+      if (this._onTimeUpdateLog) this.videoElement.removeEventListener('timeupdate', this._onTimeUpdateLog);
+    }
+    this._onSeeking = this._onSeeked = this._onRateChange = this._onTimeUpdate = this._onTimeUpdateLog = null;
+
     // 清理观察器
     if (this.observer) {
-      this.observer.disconnect();
+      try { this.observer.disconnect(); } catch (_e) {}
       this.observer = null;
     }
 
@@ -1034,9 +1062,24 @@ class BilingualSubtitles {
       this.periodicCheckInterval = null;
     }
 
+    if (this.healthCheckInterval) {
+      clearInterval(this.healthCheckInterval);
+      this.healthCheckInterval = null;
+    }
+
     if (this.cleanupInterval) {
       clearInterval(this.cleanupInterval);
       this.cleanupInterval = null;
+    }
+
+    if (this.autogenDebounceTimer) {
+      clearTimeout(this.autogenDebounceTimer);
+      this.autogenDebounceTimer = null;
+    }
+
+    if (this.loadingTimerId) {
+      clearTimeout(this.loadingTimerId);
+      this.loadingTimerId = null;
     }
 
     // 清理缓存和队列
