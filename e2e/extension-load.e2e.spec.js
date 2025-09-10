@@ -38,19 +38,35 @@ test.describe('Extension loads and injects content script', () => {
     }, { timeout: 10000 }).toBe(true);
   });
 
+  test('opens popup page via extension id', async () => {
+    // Derive extension id from the service worker URL
+    const sw = context.serviceWorkers().find(sw => sw.url().startsWith('chrome-extension://'));
+    expect(sw, 'service worker not found').toBeTruthy();
+    const url = new URL(sw.url());
+    const extensionId = url.hostname;
+
+    const page = await context.newPage();
+    await page.goto(`chrome-extension://${extensionId}/popup.html`, { waitUntil: 'load' });
+
+    // Basic assertions: popup loads and has expected header text
+    await expect(page.locator('body')).toBeVisible();
+    await expect(page.locator('.header h1')).toHaveText(/YouTube双语字幕/);
+  });
+
   test.fixme('injects on /watch and exposes global', async () => {
     const page = await context.newPage();
-    await page.goto('http://localhost:5173/watch?v=abc', { waitUntil: 'domcontentloaded' });
+    page.on('console', m => console.log('[page console]', m.type(), m.text()));
+    await page.goto('http://localhost:5173/watch?v=abc', { waitUntil: 'load' });
 
     // Wait for content script globals exposed by content.js
     await expect.poll(async () => page.evaluate(() => {
       return typeof window.bilingualSubtitles !== 'undefined' && typeof window.BilingualSubtitles !== 'undefined';
-    })).toBe(true);
+    }), { timeout: 15000 }).toBe(true);
 
     // Force a minimal render to the container and assert DOM
     await page.evaluate(() => {
       window.bilingualSubtitles.startSubtitleExtraction?.();
-      window.bilingualSubtitles.displayBilingualSubtitles?.('Hello');
+      window.bilingualSubtitles.displayBilingualSubtitle?.('Hello');
     });
 
     const container = page.locator('.bilingual-subtitles-container');

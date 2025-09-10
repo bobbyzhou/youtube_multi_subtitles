@@ -1,2 +1,3 @@
-2025/09/09-17:56:16.660 1c6970b Creating DB /Users/bobbyzhou/Coding/worktrees/youtube_subtitles-ci-tests/e2e/.pw-user/Default/Sync Extension Settings/becdmfjfnelpibcnjkeemmniadmfjnkj since it was missing.
-2025/09/09-17:56:16.663 1c6970b Reusing MANIFEST /Users/bobbyzhou/Coding/worktrees/youtube_subtitles-ci-tests/e2e/.pw-user/Default/Sync Extension Settings/becdmfjfnelpibcnjkeemmniadmfjnkj/MANIFEST-000001
+2025/09/09-18:29:33.365 1c7c454 Reusing MANIFEST /Users/bobbyzhou/Coding/worktrees/youtube_subtitles-ci-tests/e2e/.pw-user/Default/Sync Extension Settings/becdmfjfnelpibcnjkeemmniadmfjnkj/MANIFEST-000001
+2025/09/09-18:29:33.365 1c7c454 Recovering log #3
+2025/09/09-18:29:33.365 1c7c454 Reusing old log /Users/bobbyzhou/Coding/worktrees/youtube_subtitles-ci-tests/e2e/.pw-user/Default/Sync Extension Settings/becdmfjfnelpibcnjkeemmniadmfjnkj/000003.log 
