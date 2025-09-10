@@ -29,7 +29,7 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
       - name: Run E2E tests
-        run: npm run e2e:ci
+        run: xvfb-run -a npm run e2e:ci
       - name: Upload Playwright artifacts
         if: always()
         uses: actions/upload-artifact@v4
