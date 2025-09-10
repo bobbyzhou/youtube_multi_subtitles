@@ -26,7 +26,8 @@ class BilingualSubtitles {
       stableLayout: true,           // 预留空间，避免上下/左右跳动
       reserveLines: 2,              // 预留的行数（用于容器高度）
       showLoadingIndicator: true,   // 是否显示“翻译中...”提示
-      autoReserveLines: true        // 根据是否显示原文自动调整预留行数
+      autoReserveLines: true,       // 根据是否显示原文自动调整预留行数
+      previewDuringIncremental: true, // 是否启用增量阶段的提前预览翻译（默认开启）
     };
 
     this.currentSubtitles = [];
@@ -50,6 +51,11 @@ class BilingualSubtitles {
     // 自动生成英文（或增量字幕）合并与去抖
     this.autogenAccumulatedText = '';
     this.autogenDebounceTimer = null;
+
+
+    // 预览翻译（节流避免过频）
+    this.previewThrottleMs = 600;
+    this.lastPreviewAt = 0;
 
     // 健康监控与观察器
     this.healthCheckInterval = null;
@@ -600,6 +606,20 @@ class BilingualSubtitles {
             this.dom.originalEl.style.display = '';
             if (this.dom.originalEl.textContent !== subtitleText) {
               this.dom.originalEl.textContent = subtitleText;
+
+        //   :      
+        //     
+        try {
+          const now = Date.now();
+          const boundary = /\s|[.,!?;:\uFF0C\u3002\uFF1F\uFF01\u3001\u2026\u2014-]$/.test(subtitleText);
+          if (this.settings.previewDuringIncremental && boundary && (now - (this.lastPreviewAt || 0) >= this.previewThrottleMs)) {
+            this.lastPreviewAt = now;
+            //   
+            this.lastSubtitleText = subtitleText;
+            this.displayBilingualSubtitle(subtitleText, { suppressLoading: true });
+          }
+        } catch (_e) {}
+
             }
           } else {
             this.dom.originalEl.style.display = 'none';
@@ -613,7 +633,7 @@ class BilingualSubtitles {
           if (this.autogenAccumulatedText === subtitleText) {
             console.log('⏱️ 稳定窗口结束，开始翻译:', subtitleText);
             this.lastSubtitleText = subtitleText;
-            this.displayBilingualSubtitle(subtitleText);
+            this.displayBilingualSubtitle(subtitleText, { suppressLoading: true });
             this.autogenAccumulatedText = '';
           }
         }, waitMs);
@@ -638,7 +658,7 @@ class BilingualSubtitles {
     }
   }
 
-  async displayBilingualSubtitle(originalText) {
+  async displayBilingualSubtitle(originalText, opts = {}) {
     console.log('🎨 开始显示双语字幕:', originalText);
     // 若容器缺失或被移除，先自愈创建
     if (!this.subtitleContainer || !document.body.contains(this.subtitleContainer)) {
@@ -699,14 +719,19 @@ class BilingualSubtitles {
     if (needsFresh) {
       this.subtitleContainer.innerHTML = `
         <div class="original-subtitle"></div>
-        <div class="translated-subtitle loading" style="display:none"></div>
+        <div class="translated-subtitle${opts?.suppressLoading ? '' : ' loading'}" style="display:${opts?.suppressLoading ? 'inline-block' : 'none'}"></div>
       `;
       this.dom.originalEl = this.subtitleContainer.querySelector('.original-subtitle');
       this.dom.translatedEl = this.subtitleContainer.querySelector('.translated-subtitle');
     } else {
       this.dom.translatedEl.classList.remove('success', 'error');
-      this.dom.translatedEl.classList.add('loading');
-      this.dom.translatedEl.removeAttribute('data-source');
+      if (opts?.suppressLoading) {
+        this.dom.translatedEl.classList.remove('loading');
+        // 保持已有文本与可见性，避免闪烁
+      } else {
+        this.dom.translatedEl.classList.add('loading');
+        this.dom.translatedEl.removeAttribute('data-source');
+      }
     }
 
     // 更新原文文本（只在变更时写入）
@@ -722,14 +747,18 @@ class BilingualSubtitles {
 
     // 控制“翻译中...”延迟展示窗口
     clearTimeout(this.loadingTimerId);
-    this.dom.translatedEl.style.display = 'none';
-    if (this.settings.showLoadingIndicator) {
-      this.loadingTimerId = setTimeout(() => {
-        if (this.lastSubtitleText === originalText && this.dom.translatedEl) {
-          this.dom.translatedEl.textContent = '翻译中...';
-          this.dom.translatedEl.style.display = 'inline-block';
-        }
-      }, Math.max(120, this.settings.translationDelay || 0));
+    if (opts?.suppressLoading) {
+      // 预览模式：保持现有译文可见，不显示“翻译中...”，避免闪烁
+    } else {
+      this.dom.translatedEl.style.display = 'none';
+      if (this.settings.showLoadingIndicator) {
+        this.loadingTimerId = setTimeout(() => {
+          if (this.lastSubtitleText === originalText && this.dom.translatedEl) {
+            this.dom.translatedEl.textContent = '翻译中...';
+            this.dom.translatedEl.style.display = 'inline-block';
+          }
+        }, Math.max(120, this.settings.translationDelay || 0));
+      }
     }
 
     try {

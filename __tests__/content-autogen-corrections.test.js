@@ -23,6 +23,9 @@ describe('Auto-generated English corrections and flicker suppression', () => {
     captionTextEl = captionContainer.querySelector('.captions-text');
 
     instance = new BilingualSubtitles({ skipInit: true });
+    // 关闭预览以验证合并与去抖动的行为
+    instance.settings.previewDuringIncremental = false;
+
     instance.settings.animationEnabled = false;
     // 默认开启 loading，验证增量阶段不出现 flicker
     instance.settings.showLoadingIndicator = true;

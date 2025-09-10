@@ -29,6 +29,7 @@ describe('popup.js UI interactions', () => {
         <select id="reserveLines"><option value="2">2</option></select>
         <input type="checkbox" id="autoReserveLines" />
         <input type="checkbox" id="showLoadingIndicator" />
+        <input type="checkbox" id="previewDuringIncremental" />
         <input type="checkbox" id="showOriginal" />
         <input type="checkbox" id="hideYouTubeCaptions" />
         <input type="checkbox" id="animationEnabled" />

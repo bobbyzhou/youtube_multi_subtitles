@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const reserveLinesSelect = document.getElementById('reserveLines');
   const autoReserveLinesToggle = document.getElementById('autoReserveLines');
   const showLoadingIndicatorToggle = document.getElementById('showLoadingIndicator');
+  const previewDuringIncrementalToggle = document.getElementById('previewDuringIncremental');
   const clearCacheBtn = document.getElementById('clearCacheBtn');
   const saveBtn = document.getElementById('saveBtn');
   const statusDiv = document.getElementById('status');
@@ -42,6 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
     reserveLines: 2,
     autoReserveLines: true,
     showLoadingIndicator: true,
+    previewDuringIncremental: true,
     showOriginal: true,
     animationEnabled: true,
     translationDelay: 50,
@@ -75,6 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
       reserveLinesSelect.value = settings.reserveLines;
       autoReserveLinesToggle.checked = settings.autoReserveLines;
       showLoadingIndicatorToggle.checked = settings.showLoadingIndicator;
+      previewDuringIncrementalToggle.checked = settings.previewDuringIncremental;
       showOriginalToggle.checked = settings.showOriginal;
       hideYouTubeCaptionsToggle.checked = settings.hideYouTubeCaptions;
       animationEnabledToggle.checked = settings.animationEnabled;
@@ -100,6 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
       reserveLines: parseInt(reserveLinesSelect.value),
       autoReserveLines: autoReserveLinesToggle.checked,
       showLoadingIndicator: showLoadingIndicatorToggle.checked,
+      previewDuringIncremental: previewDuringIncrementalToggle.checked,
       showOriginal: showOriginalToggle.checked,
       hideYouTubeCaptions: hideYouTubeCaptionsToggle.checked,
       animationEnabled: animationEnabledToggle.checked,
@@ -148,7 +152,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // 监听设置变化，实时预览
   [enabledToggle, targetLanguageSelect, displayPositionSelect, fontSizeSelect,
    apiPreferenceSelect, apiKeyInput, cacheTimeSelect, preTranslateToggle, prefetchAggressiveSelect, prefetchLookaheadSelect, prefetchIntervalMsSelect,
-   stableLayoutToggle, reserveLinesSelect, autoReserveLinesToggle, showLoadingIndicatorToggle,
+   stableLayoutToggle, reserveLinesSelect, autoReserveLinesToggle, showLoadingIndicatorToggle, previewDuringIncrementalToggle,
    showOriginalToggle, hideYouTubeCaptionsToggle, animationEnabledToggle, translationDelaySelect].forEach(element => {
     element.addEventListener('change', function() {
       // 可以在这里添加实时预览逻辑

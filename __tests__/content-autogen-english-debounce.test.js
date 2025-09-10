@@ -23,6 +23,8 @@ describe('Auto-generated English incremental subtitles (debounce & coalesce)', (
     captionTextEl = captionContainer.querySelector('.captions-text');
 
     instance = new BilingualSubtitles({ skipInit: true });
+    // 关闭预览以验证去抖合并的原有语义
+    instance.settings.previewDuringIncremental = false;
     // 简化视觉影响
     instance.settings.showLoadingIndicator = false;
     instance.settings.animationEnabled = false;
