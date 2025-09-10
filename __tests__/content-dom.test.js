@@ -17,7 +17,7 @@ describe('BilingualSubtitles DOM operations', () => {
         </div>
       </div>
     `;
-    
+
     instance = new BilingualSubtitles({ skipInit: true });
   });
 
@@ -28,7 +28,7 @@ describe('BilingualSubtitles DOM operations', () => {
   test('escapeHtml properly escapes HTML entities', () => {
     const input = '<script>alert("xss")</script>&amp;"quotes"';
     const escaped = instance.escapeHtml(input);
-    
+
     expect(escaped).not.toContain('<script>');
     expect(escaped).toContain('&lt;script&gt;');
     expect(escaped).toContain('&amp;amp;');
@@ -71,15 +71,15 @@ describe('BilingualSubtitles DOM operations', () => {
     const value1 = '你好';
     const key2 = 'world';
     const value2 = '世界';
-    
+
     // Test cache set and get
     instance.setCacheWithLimit(key1, value1);
     expect(instance.translationCache.get(key1)).toBe(value1);
-    
+
     // Test cache limit enforcement
     instance.maxCacheSize = 1;
     instance.setCacheWithLimit(key2, value2);
-    
+
     expect(instance.translationCache.size).toBe(1);
     expect(instance.translationCache.has(key1)).toBe(false);
     expect(instance.translationCache.get(key2)).toBe(value2);

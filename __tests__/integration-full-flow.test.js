@@ -38,7 +38,7 @@ describe('Full Translation Flow Integration', () => {
 
     // Mock fetch for translation API
     global.fetch = jest.fn();
-    
+
     instance = new BilingualSubtitles({ skipInit: true });
   });
 
@@ -50,17 +50,17 @@ describe('Full Translation Flow Integration', () => {
   test('complete translation workflow', async () => {
     // Mock successful API response
     const mockJson = jest.fn().mockResolvedValue([[['你好世界']]]);
-    global.fetch.mockResolvedValue({ 
-      ok: true, 
-      status: 200, 
-      statusText: 'OK', 
-      json: mockJson 
+    global.fetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      json: mockJson
     });
 
     // Test the full flow
     const originalText = 'Hello world';
     const result = await translateText(originalText, 'auto', 'zh-CN', '');
-    
+
     expect(result).toBe('你好世界');
     expect(global.fetch).toHaveBeenCalledWith(
       expect.stringContaining('translate.googleapis.com'),
@@ -70,15 +70,15 @@ describe('Full Translation Flow Integration', () => {
 
   test('caching mechanism works end-to-end', async () => {
     const mockJson = jest.fn().mockResolvedValue([[['你好世界']]]);
-    global.fetch.mockResolvedValue({ 
-      ok: true, 
-      status: 200, 
-      statusText: 'OK', 
-      json: mockJson 
+    global.fetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      json: mockJson
     });
 
     const originalText = 'Hello world';
-    
+
     // First call should hit API
     const result1 = await translateText(originalText, 'auto', 'zh-CN', '');
     expect(result1).toBe('你好世界');
@@ -86,7 +86,7 @@ describe('Full Translation Flow Integration', () => {
 
     // Add to cache manually (simulating the caching that would happen in real usage)
     instance.setCacheWithLimit(originalText, '你好世界');
-    
+
     // Verify cache works
     expect(instance.translationCache.get(originalText)).toBe('你好世界');
   });
@@ -97,7 +97,7 @@ describe('Full Translation Flow Integration', () => {
 
     const originalText = 'Hello world';
     const result = await translateText(originalText, 'auto', 'zh-CN', '');
-    
+
     // Should return fallback translation
     expect(result).toBe('[翻译失败: Hello world]');
   });
@@ -105,7 +105,7 @@ describe('Full Translation Flow Integration', () => {
   test('subtitle display integration', () => {
     const originalText = 'Hello world';
     const translatedText = '你好世界';
-    
+
     // Test display function doesn't throw
     expect(() => {
       instance.displayTranslationResult(originalText, translatedText);
@@ -134,15 +134,15 @@ describe('Full Translation Flow Integration', () => {
         translations: [{ translatedText: 'Hola mundo' }]
       }
     });
-    global.fetch.mockResolvedValue({ 
-      ok: true, 
-      status: 200, 
-      statusText: 'OK', 
-      json: mockJson 
+    global.fetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      json: mockJson
     });
 
-    const result = await translateText('Hello world', 'en', 'es', 'AIzaSyA-test-key-1234567890');
-    
+    const _result = await translateText('Hello world', 'en', 'es', 'AIzaSyA-test-key-1234567890');
+
     // Should use official API with the provided key
     expect(global.fetch).toHaveBeenCalledWith(
       expect.stringContaining('translation.googleapis.com/language/translate/v2'),

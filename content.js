@@ -452,7 +452,7 @@ class BilingualSubtitles {
     if (!this.settings.prefetchIntervalMs) {
       this.settings.prefetchIntervalMs = defaults[level] || 300;
     }
-    try { this.preTranslateUpcomingSubtitles(); } catch (e) {}
+    try { this.preTranslateUpcomingSubtitles(); } catch (_e) {}
   }
 
   // 计算有效的预留行数：当关闭“显示原文”且开启 autoReserveLines 时，减少一行
