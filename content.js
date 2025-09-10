@@ -579,15 +579,16 @@ class BilingualSubtitles {
           }
           const needsBase = !this.dom.originalEl || !this.dom.translatedEl || this.subtitleContainer.innerHTML.trim() === '';
           if (needsBase) {
+            // 在增量阶段，仅构建基础DOM，不显示 loading，以避免频繁“翻译中”干扰
             this.subtitleContainer.innerHTML = `
               <div class="original-subtitle"></div>
-              <div class="translated-subtitle loading" style="display:none"></div>
+              <div class="translated-subtitle"></div>
             `;
             this.dom.originalEl = this.subtitleContainer.querySelector('.original-subtitle');
             this.dom.translatedEl = this.subtitleContainer.querySelector('.translated-subtitle');
           } else {
-            this.dom.translatedEl.classList.remove('success', 'error');
-            this.dom.translatedEl.classList.add('loading');
+            // Do not toggle 'loading' during incremental tokens. Keep current translated text visible.
+            // This avoids constant '翻译中' flicker and preserves usability.
           }
           if (this.settings.showOriginal) {
             this.dom.originalEl.style.display = '';
