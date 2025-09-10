@@ -122,6 +122,14 @@ document.addEventListener('DOMContentLoaded', function() {
             settings: settings
           });
         }
+
+      // 同时通知 background，便于立即响应（如清理缓存/切换策略）
+      try {
+        chrome.runtime.sendMessage({ type: 'SETTINGS_UPDATED', settings });
+      } catch (e) {
+        console.warn('notify background failed:', e);
+      }
+
       });
     });
   }

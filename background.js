@@ -13,6 +13,8 @@ const TRANSLATION_CONFIG = {
 
 // 最近一次翻译所使用的API来源（'v2' | 'free' | null）
 let LAST_API_SOURCE = null;
+// 当前偏好（用于在设置变更时进行缓存策略处理）
+let CURRENT_API_PREFERENCE = null;
 
 
 // Detect Extension environment (avoid side effects during Node/Jest tests)
@@ -90,6 +92,21 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       sendResponse({ success: true, source: LAST_API_SOURCE });
       return true;
 
+    case 'SETTINGS_UPDATED': {
+      const newPref = request.settings?.apiPreference;
+      if (newPref && newPref !== CURRENT_API_PREFERENCE) {
+        CURRENT_API_PREFERENCE = newPref;
+        // 偏好变更：清理翻译缓存，避免旧策略的结果继续命中
+        chrome.storage.local.clear(() => {
+          console.log('Cleared translation cache due to apiPreference change ->', newPref);
+          sendResponse({ success: true, cleared: true });
+        });
+        return true;
+      }
+      sendResponse({ success: true, cleared: false });
+      return true;
+    }
+
 
     default:
       console.log('Unknown message type:', request.type);
@@ -105,7 +122,8 @@ async function handleTranslateRequest(request, sendResponse) {
   try {
     // 获取用户设置
     const settings = await getSettings();
-    const cacheKey = `${sourceLanguage}-${targetLanguage}-${text}`;
+    const apiPref = settings.apiPreference || 'auto';
+    const cacheKey = `${sourceLanguage}-${targetLanguage}-${apiPref}-${text}`;
 
     // 首先检查缓存
     const cached = await getCachedTranslation(cacheKey, settings.cacheTime);
@@ -154,7 +172,8 @@ async function handleBatchTranslateRequest(request, sendResponse) {
     // 检查缓存
     for (let i = 0; i < texts.length; i++) {
       const text = texts[i];
-      const cacheKey = `${sourceLanguage}-${targetLanguage}-${text}`;
+      const apiPref = settings.apiPreference || 'auto';
+      const cacheKey = `${sourceLanguage}-${targetLanguage}-${apiPref}-${text}`;
       const cached = await getCachedTranslation(cacheKey, settings.cacheTime);
 
       if (cached) {
@@ -176,8 +195,9 @@ async function handleBatchTranslateRequest(request, sendResponse) {
 
         results[originalIndex] = { success: true, translation, fromCache: false };
 
-        // 缓存结果
-        const cacheKey = `${sourceLanguage}-${targetLanguage}-${text}`;
+        // 缓存结果（包含 apiPreference 以避免策略切换后命中旧缓存）
+        const apiPref = settings.apiPreference || 'auto';
+        const cacheKey = `${sourceLanguage}-${targetLanguage}-${apiPref}-${text}`;
         await cacheTranslation(cacheKey, translation, settings.cacheTime);
       }
     }
