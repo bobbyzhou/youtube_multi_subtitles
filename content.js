@@ -565,12 +565,18 @@ class BilingualSubtitles {
     }
 
     if (subtitleText && subtitleText !== this.lastSubtitleText) {
-      // 检测是否为前缀扩展（auto-generated 英文常见的增量追加）
+      // 检测是否为前缀扩展或轻微回退（auto-generated 英文常见的增量/纠错）
       const base = this.autogenAccumulatedText || this.lastSubtitleText || '';
-      const isPrefixExtension = !!base && subtitleText.startsWith(base) && !subtitleText.includes('\n') && (subtitleText.length - base.length) <= 20;
-      const isSeedIncrement = !this.lastSubtitleText && !this.autogenAccumulatedText && !subtitleText.includes('\n') && subtitleText.length <= 20;
+      const smallDelta = 20;
+      const isSingleLine = !subtitleText.includes('\n');
+      // 前缀扩展：base -> subtitleText（长度增加且以 base 开头）
+      const isPrefixExtension = !!base && subtitleText.startsWith(base) && isSingleLine && (subtitleText.length - base.length) <= smallDelta;
+      // 前缀回退（纠错/退格）：subtitleText 是 base 的前缀（长度减少且差值较小）
+      const isPrefixReduction = !!base && base.startsWith(subtitleText) && isSingleLine && (base.length - subtitleText.length) <= smallDelta;
+      // 初始小种子：无 base 时的短 token
+      const isSeedIncrement = !this.lastSubtitleText && !this.autogenAccumulatedText && isSingleLine && subtitleText.length <= smallDelta;
 
-      if (isPrefixExtension || isSeedIncrement) {
+      if (isPrefixExtension || isPrefixReduction || isSeedIncrement) {
         // 记录增量原文并只更新原文UI，不立刻触发翻译
         this.autogenAccumulatedText = subtitleText;
         try {
@@ -614,7 +620,7 @@ class BilingualSubtitles {
         return;
       }
 
-      // 非前缀扩展，直接翻译并重置增量状态
+      // 非前缀扩展/回退，直接翻译并重置增量状态
       this.autogenAccumulatedText = '';
       clearTimeout(this.autogenDebounceTimer);
 
