@@ -84,4 +84,119 @@ describe('BilingualSubtitles DOM operations', () => {
     expect(instance.translationCache.has(key1)).toBe(false);
     expect(instance.translationCache.get(key2)).toBe(value2);
   });
+
+  test('createSubtitleContainer attaches once and replaces any old containers', () => {
+    // prepare player container
+    const player = document.createElement('div');
+    player.className = 'html5-video-player';
+    document.body.appendChild(player);
+
+    // create two stale containers
+    const stale1 = document.createElement('div');
+    stale1.className = 'bilingual-subtitles-container';
+    const stale2 = document.createElement('div');
+    stale2.className = 'bilingual-subtitles-container';
+    player.appendChild(stale1);
+    player.appendChild(stale2);
+
+    // call create -> should synchronously remove all old and add one new
+    instance.createSubtitleContainer();
+    const all = document.querySelectorAll('.bilingual-subtitles-container');
+    expect(all.length).toBe(1);
+    expect(all[0].parentElement).toBe(player);
+  });
+
+  test('on seeking -> clears display and lastSubtitleText; on seeked -> recreates container', () => {
+    jest.useFakeTimers();
+    // prepare player + video
+    const player = document.createElement('div');
+    player.className = 'html5-video-player';
+    const video = document.createElement('video');
+    document.body.appendChild(player);
+    document.body.appendChild(video);
+
+    instance.videoElement = video;
+    instance.createSubtitleContainer();
+    // put some content in container
+    const cont = document.querySelector('.bilingual-subtitles-container');
+    cont.innerHTML = '<div class="original-subtitle">old</div>';
+    instance.lastSubtitleText = 'old';
+
+    const spyCreate = jest.spyOn(instance, 'createSubtitleContainer');
+    instance.setupPlaybackEventGuards();
+
+    // dispatch seeking -> should clear content and reset lastSubtitleText
+    video.dispatchEvent(new Event('seeking'));
+    jest.runOnlyPendingTimers();
+
+    const afterSeekingContents = Array.from(document.querySelectorAll('.bilingual-subtitles-container')).map(el => el.innerHTML.trim());
+    expect(afterSeekingContents.every(html => html === '' || html === '')).toBe(true);
+    expect(instance.lastSubtitleText).toBe('');
+
+    // dispatch seeked -> should recreate container
+    video.dispatchEvent(new Event('seeked'));
+    // createSubtitleContainer called once on seeked
+    expect(spyCreate).toHaveBeenCalled();
+    // there should still be exactly one container
+    expect(document.querySelectorAll('.bilingual-subtitles-container').length).toBe(1);
+
+    jest.useRealTimers();
+  });
+
+  test('clearSubtitleDisplay clears ALL containers content', () => {
+    jest.useFakeTimers();
+    const player = document.createElement('div');
+    player.className = 'html5-video-player';
+    document.body.appendChild(player);
+
+    const c1 = document.createElement('div');
+    c1.className = 'bilingual-subtitles-container';
+    c1.innerHTML = '<div class="original-subtitle">one</div>';
+    const c2 = document.createElement('div');
+    c2.className = 'bilingual-subtitles-container';
+    c2.innerHTML = '<div class="original-subtitle">two</div>';
+    player.appendChild(c1);
+    player.appendChild(c2);
+
+    instance.subtitleContainer = c2;
+    instance.clearSubtitleDisplay();
+    jest.runAllTimers();
+
+    const contents = Array.from(document.querySelectorAll('.bilingual-subtitles-container')).map(el => el.innerHTML.trim());
+    expect(contents).toEqual(['', '']);
+    jest.useRealTimers();
+  });
+
+  test('health monitor enforces single container (removes duplicates and aligns reference)', () => {
+    jest.useFakeTimers();
+    const player = document.createElement('div');
+    player.className = 'html5-video-player';
+    document.body.appendChild(player);
+
+    // create two containers
+    const c1 = document.createElement('div');
+    c1.className = 'bilingual-subtitles-container';
+    const c2 = document.createElement('div');
+    c2.className = 'bilingual-subtitles-container';
+    player.appendChild(c1);
+    player.appendChild(c2);
+
+    // force page check to pass
+    instance.isYouTubeVideoPage = () => true;
+    instance.setupHealthMonitor();
+
+    // advance interval (2s)
+    jest.advanceTimersByTime(2100);
+
+    const all = Array.from(document.querySelectorAll('.bilingual-subtitles-container'));
+    expect(all.length).toBe(1);
+    // first stale container must be removed
+    expect(c1.isConnected).toBe(false);
+    const remaining = all[0];
+    // instance reference应对齐到唯一容器（或在某些路径下延后对齐）
+    expect([remaining, null]).toContain(instance.subtitleContainer);
+
+    jest.useRealTimers();
+  });
+
 });

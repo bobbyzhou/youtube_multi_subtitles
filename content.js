@@ -149,28 +149,29 @@ class BilingualSubtitles {
 
 
   createSubtitleContainer() {
-    // 移除已存在的容器
-    const existing = document.querySelector('.bilingual-subtitles-container');
-    if (existing) {
-      existing.classList.add('fade-out');
-      setTimeout(() => existing.remove(), 300);
+    // 移除已存在的所有容器，避免遗留导致的重叠
+    const existingAll = Array.from(document.querySelectorAll('.bilingual-subtitles-container'));
+    if (existingAll.length) {
+      existingAll.forEach((el) => {
+        // 为了避免重叠和冻结，立即移除旧容器
+        try { el.remove(); } catch (_e) {}
+      });
     }
 
     // 创建新容器
     this.subtitleContainer = document.createElement('div');
     this.subtitleContainer.className = `bilingual-subtitles-container position-${this.settings.displayPosition} size-${this.settings.fontSize} ${this.settings.animationEnabled ? 'animations-enabled' : 'animations-disabled'}`;
-      // 稳定布局
-      if (this.settings.stableLayout) {
-        this.subtitleContainer.classList.add('reserve-space');
-        this.subtitleContainer.style.setProperty('--bs-reserve-lines', String(this.getEffectiveReserveLines()));
-      }
+    // 稳定布局
+    if (this.settings.stableLayout) {
+      this.subtitleContainer.classList.add('reserve-space');
+      this.subtitleContainer.style.setProperty('--bs-reserve-lines', String(this.getEffectiveReserveLines()));
+    }
 
     // 添加到视频播放器
     const player = document.querySelector('.html5-video-player');
     if (player) {
       // 覆盖模式时隐藏原生字幕；或当设置强制隐藏时也隐藏
       const overlay = this.settings.displayPosition === 'overlay';
-
 
       if (overlay) {
         player.classList.add('bilingual-subtitles-overlay-mode');
@@ -334,6 +335,14 @@ class BilingualSubtitles {
         const overlay = this.settings.displayPosition === 'overlay';
         player.classList.toggle('bilingual-subtitles-overlay-mode', overlay);
         player.classList.toggle('bilingual-subtitles-hide-native', !!this.settings.hideYouTubeCaptions);
+      }
+
+      // 确保仅存在一个字幕容器：移除任何遗留的旧容器，保留最后一个
+      const containers = Array.from(document.querySelectorAll('.bilingual-subtitles-container'));
+      if (containers.length > 1) {
+        const keep = containers[containers.length - 1];
+        containers.forEach((el) => { if (el !== keep) { try { el.remove(); } catch (_e) {} } });
+        if (this.subtitleContainer !== keep) this.subtitleContainer = keep;
       }
     }, 2000); // 缩短检查间隔到2秒
   }
@@ -852,18 +861,19 @@ class BilingualSubtitles {
   }
 
   clearSubtitleDisplay() {
-    if (this.subtitleContainer) {
-      // 添加淡出效果
-      this.subtitleContainer.classList.remove('fade-in');
-      this.subtitleContainer.classList.add('fade-out');
+    // 清理所有可能存在的字幕容器内容，避免遗留造成重叠
+    const containers = Array.from(document.querySelectorAll('.bilingual-subtitles-container'));
+    if (containers.length === 0 && this.subtitleContainer) containers.push(this.subtitleContainer);
 
+    containers.forEach((el) => {
+      try { el.classList.remove('fade-in'); el.classList.add('fade-out'); } catch (_e) {}
       setTimeout(() => {
-        if (this.subtitleContainer) {
-          this.subtitleContainer.innerHTML = '';
-          this.subtitleContainer.classList.remove('fade-out');
-        }
+        try {
+          el.innerHTML = '';
+          el.classList.remove('fade-out');
+        } catch (_e) {}
       }, 300);
-    }
+    });
   }
 
   setupMessageListener() {
